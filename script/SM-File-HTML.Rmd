@@ -1,0 +1,3012 @@
+---
+title: "Supplementary Material (SM)"
+subtitle: "Le Mirage Oriental"
+author: 
+  - Armando Falcucci, Steven L. Kuhn
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r include=FALSE, warning=FALSE}
+library(readxl)
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(tidyr)
+library(janitor)
+library(tidyverse)
+library(cowplot)
+library(MetBrewer)
+library(ggpubr)
+library(rstatix)
+library(forcats)
+library(flextable)
+library(scales)
+
+dataset <- read.csv("../data/KA_datasets/KA_dataset.clean.csv")
+
+Data.PA.KA <- read.csv("../data/Data.PA.KA.csv")
+
+MCA.data.core <- read.csv("../data/MCA.data.core.csv")
+
+Core.dataset <- read.csv("../data/Core.dataset.csv")
+
+```
+
+```{r, include=FALSE, warning=FALSE}
+## platform dataset
+MCA.data.platform <- Data.PA.KA %>%
+  filter(Class == "Blank") %>%
+  mutate(
+    Platform.type = if_else(Platform.type == "Undetermined", NA_character_, Platform.type),
+    Platform.shape = if_else(Platform.shape == "Undetermined", NA_character_, Platform.shape), # ig this done on the main code for reshaping, remove it!
+    
+    # Rename and categorize Layer based on Length
+    Layer = case_when(
+      Layer == "RF_A2-A1" & Length >= 25 ~ "RF_A2-A1.high",
+      Layer == "RF_A2-A1" & Length < 25 ~ "RF_A2-A1.low",
+      
+      Layer == "RB_A2-A1" & Length >= 25 ~ "RB_A2-A1.high",
+      Layer == "RB_A2-A1" & Length < 25 ~ "RB_A2-A1.low",
+      
+      Layer == "CTC_rsa'" & Length >= 25 ~ "CTC_rsa'.high",
+      Layer == "CTC_rsa'" & Length < 25 ~ "CTC_rsa'.low",
+      
+      TRUE ~ Layer  # Keep other Layer values unchanged
+    )
+  ) %>%
+  # mutate(Platform.ratio = Platform.width / Platform.thickness) %>%
+  select(Layer, Platform.type, Platform.shape, Lip.type, Bulb.type, Elongation)
+
+
+MCA.data.platform <- MCA.data.platform %>%
+  mutate(
+    Elongation = RcmdrMisc::binVariable(Elongation, bins = 2, method = "natural",
+                                        labels = c("Low", "High"))
+  ) %>%
+  na.omit() %>%
+  droplevels() %>%
+  dplyr::mutate(
+    Platform.type = dplyr::recode(Platform.type,
+                                  "Dihedral flat" = "Dihedral",
+                                  "Double" = "Plain",
+                                  "Smashed" = "Plain",
+                                  "Abraded" = "Plain"),
+    Platform.shape = dplyr::recode(Platform.shape,
+                                   "Trapezoidal" = "Rectangular") ## check first the levels
+  ) %>%
+  mutate(across(c(Platform.type, Platform.shape),
+                ~ fct_lump(factor(.), prop = 0.05, other_level = "Other")))
+```
+
+```{r include=FALSE, warning=FALSE}
+MCA.data.direction <- Data.PA.KA %>%
+  filter(Class == "Blank") %>%
+  mutate(Layer = case_when(
+    Layer == "RF_A2-A1" & Length >= 25 ~ "RF_A2-A1.high",
+    Layer == "RF_A2-A1" & Length < 25 ~ "RF_A2-A1.low",
+    
+    Layer == "RB_A2-A1" & Length >= 25 ~ "RB_A2-A1.high",
+    Layer == "RB_A2-A1" & Length < 25 ~ "RB_A2-A1.low",
+    
+    Layer == "CTC_rsa'" & Length >= 25 ~ "CTC_rsa'.high",
+    Layer == "CTC_rsa'" & Length < 25 ~ "CTC_rsa'.low",
+    
+    TRUE ~ Layer  # Keep other Layer values unchanged
+  )
+  ) %>%
+  rename(Scar.patt = Scar.pattern.2) %>%  # Rename Scar.pattern.2 to Scar.patt
+  mutate(
+    Scar.nr = Section,  # Create new column Scar.nr copying Section
+    Cortex = as.character(Cortex)  # Change Cortex to character
+  ) %>%
+  mutate(
+    # Rename values in Scar.patt
+    Scar.patt = case_when(
+      Scar.patt == "Bidirectional" ~ "Bidirectional",
+      Scar.patt == "Crossed" ~ "Other",
+      Scar.patt == "Undetermined" ~ NA_character_,
+      Scar.patt == "Other" ~ "Other",
+      Scar.patt %in% c(
+        "Unidirectional parallel",
+        "Unidirectional sub-parallel"
+      ) ~ "Unidirectional sub-parallel",
+            Scar.patt %in% c(
+        "Unidirectional transversal",
+        "Unidirectional transverse"
+      ) ~ "Unidirectional sub-parallel",
+      TRUE ~ Scar.patt  # Keep other values unchanged
+    ),
+    
+    # Rename values in Scar.nr
+    Scar.nr = case_when(
+      Scar.nr == "Flat" ~ "0",
+      Scar.nr == "Lateral steep" ~ "1",
+      Scar.nr == "Triangular" ~ "1",
+      Scar.nr == "Polyhedral" ~ "3+",
+      Scar.nr == "Rectangular" ~ "2",
+      Scar.nr == "Trapezoidal" ~ "2",
+      Scar.nr == "Undetermined" ~ NA_character_,
+      TRUE ~ Scar.nr  # Keep other values unchanged
+    )
+  )
+
+# Step 3: Select relevant columns, remove NAs, and drop unused levels
+MCA.data.direction <- MCA.data.direction %>%
+  select(Layer, Cortex, Scar.patt, Scar.nr) %>%
+  na.omit() %>%
+  droplevels()
+```
+
+```{r include=FALSE, warning=FALSE}
+MCA.data.convexity <- Data.PA.KA %>%
+  filter(Class == "Blank") %>%
+  mutate(Layer = case_when(
+    Layer == "RF_A2-A1" & Length >= 25 ~ "RF_A2-A1.high",
+    Layer == "RF_A2-A1" & Length < 25 ~ "RF_A2-A1.low",
+    
+    Layer == "RB_A2-A1" & Length >= 25 ~ "RB_A2-A1.high",
+    Layer == "RB_A2-A1" & Length < 25 ~ "RB_A2-A1.low",
+    
+    Layer == "CTC_rsa'" & Length >= 25 ~ "CTC_rsa'.high",
+    Layer == "CTC_rsa'" & Length < 25 ~ "CTC_rsa'.low",
+    
+    TRUE ~ Layer  # Keep other Layer values unchanged
+  )
+  ) %>%
+  mutate(
+    # Recode Curvature
+    Curvature = case_when(
+      Curvature == "Curved sligthly" ~ "Curved slightly",
+      Curvature == "Curved inverse" ~ "Curved slightly",
+      TRUE ~ Curvature  # Keep other values unchanged
+    ),
+    
+    # Recode Torsion
+    Torsion = case_when(
+      Torsion == "0" ~ "Non-twisted",
+      Torsion %in% c("1L", "1R", "2L", "2R") ~ "Twisted",
+      TRUE ~ Torsion  # Keep other values unchanged
+    ),
+    
+    # Recode Distal.end
+    Distal.end = case_when(
+      Distal.end == "Concave" ~ "Irregular",
+      Distal.end == "Undetermined" ~ NA_character_,
+      TRUE ~ Distal.end  # Keep other values unchanged
+    )
+  ) %>%
+  select(Layer, Elongation, Robustness, Curvature, Torsion, Section, Blank.shape, Distal.end)
+  
+## I think remove the cross section as it is correlated with the other!
+
+# Binning continuous variables
+MCA.data.convexity <- MCA.data.convexity %>%
+    mutate(
+    Elongation = RcmdrMisc::binVariable(Elongation, bins = 2, method = "natural",
+                                        labels = c("low", "high")),
+    Robustness = RcmdrMisc::binVariable(Robustness, bins = 2, method = "natural",
+                                        labels = c("high", "low"))
+    ) %>%
+  mutate(
+    across(c(Section, Blank.shape), ~ fct_lump(factor(.), prop = 0.05, other_level = "Other"))
+  )
+
+  # Step 2: Remove rows with NAs
+MCA.data.convexity <- MCA.data.convexity %>%
+  na.omit() %>%
+  droplevels()
+```
+
+
+```{r include=FALSE, warning=FALSE}
+MCA.data.tool <- Data.PA.KA %>%
+  filter(Class == "Tool", Preservation == "Complete", Blank.type %in% c("Blade", "Bladelet"), !Layer %in% c("RB_A2-A1", "CTC_rsa'")) %>%
+  mutate(Layer = case_when(
+    Layer == "RF_A2-A1" & Length >= 25 ~ "RF_A2-A1.high",
+    Layer == "RF_A2-A1" & Length < 25 ~ "RF_A2-A1.low",
+    TRUE ~ Layer  # Keep other Layer values unchanged
+  ))
+
+
+typo.list <- as.data.frame(table(MCA.data.tool$Typology.simplified))
+
+selected.tools <- c(
+  "Blade Aurignacian", "Blade pointed", "Blade retouched",
+  "Blade with convergent retouch", "Blade with lateral retouch",
+  "Blade with lateral retouch+Bec", "Blade with lateral retouch+Truncation",
+  "Bladelet retouched", "Bladelet with convergent retouch",
+  "Bladelet with lateral retouch", "Retouched blade", 
+  "Retouched bladelet", "Truncation"
+) #based on the table to check types above
+
+MCA.data.tool <- MCA.data.tool %>%
+  filter(Typology.simplified %in% selected.tools) %>%
+  mutate(Retouch.position = dplyr::recode(Retouch.position, Sporadic = "Direct")) %>%
+  mutate(
+    Blank.shape = case_when(
+      ID %in% c("KA_1558", "KA_1621", "RF.b_24", "RF.b_26", "RF.b_207") ~ "Sub-parallel",
+      ID %in% c("RF.b_203", "RF.b_28") ~ "Convergent",
+      TRUE ~ Blank.shape  # Keep existing values for others
+    ),
+    Distal.end = case_when(
+      ID %in% c("RF.b_207", "CTC_193", "CTC_1953", "CTC_1958", "CTC_1964", "RB_143", "RB_193", "RB_198") ~ "Convex",
+      ID %in% c("RF.b_583", "CTC_1951", "CTC_1960") ~ "Pointed",
+      TRUE ~ Distal.end  # Keep existing values for others
+    )
+  ) ## to rename NA values that could be however extracted with confidence from other variables.
+
+# Step 1: Create a new dataset and rename columns
+MCA.data.tool <- MCA.data.tool %>%
+  mutate(
+    # Recode Curvature
+    Curvature = case_when(
+      Curvature == "Curved sligthly" ~ "Curved slightly",
+      Curvature == "Curved inverse" ~ "Curved slightly",
+      Curvature == "Curved intense" ~ "Curved",
+      TRUE ~ Curvature  # Keep other values unchanged
+    ),
+    
+    # Recode Torsion
+    Torsion = case_when(
+      Torsion == "0" ~ "Non-twisted",
+      Torsion %in% c("1L", "1R", "2L", "2R") ~ "Twisted",
+      TRUE ~ Torsion  # Keep other values unchanged
+    ),
+    
+    # Recode Distal.end
+    Distal.end = case_when(
+      Distal.end == "Concave" ~ "Irregular",
+      TRUE ~ Distal.end  # Keep other values unchanged
+    )
+  ) %>%
+  mutate(Cortex = case_when(
+    Cortex %in% c("33-66%", "66-99%", "100%") ~ ">33%",
+    TRUE ~ Cortex  # Keep existing values for others
+  )) %>%
+  select(Layer, Cortex, Elongation, Robustness, Curvature, Torsion, Blank.shape, Distal.end, Retouch.position)
+
+# Binning continuous variables
+MCA.data.tool <- MCA.data.tool %>%
+  mutate(
+    Elongation = RcmdrMisc::binVariable(
+      Elongation,
+      bins = 2,
+      method = "natural",
+      labels = c("low", "high")
+    ),
+    Robustness = RcmdrMisc::binVariable(
+      Robustness,
+      bins = 2,
+      method = "natural",
+      labels = c("low", "high")
+    )
+  ) %>%
+  mutate(
+    across(c(Blank.shape), ~ fct_lump(factor(.), prop = 0.05, other_level = "Other"))
+  )
+
+# Step 2: Remove rows with NAs
+MCA.data.tool <- MCA.data.tool %>%
+  na.omit() %>%
+  droplevels()
+```
+
+## Supplementary Note 1
+The Ksar Akil collections exhibits a strong bias toward complete artifacts. The number of fragmented artifacts is notably low, both among blanks (Table S1; 23.7% fragmented) and tools (Table S2; 25.1% fragmented). In both categories, mesial fragments are the least common, while distal fragments are slightly more prevalent among tools. This trend may be attributed to the selection of distally modified tools, such as endscrapers. As a comparative value, we present in Table S3 the fragmentation of the IUP and Early Ahmarian unretouched blanks from Üçağızlı Cave (Hatay, Turkey). Here, fragmented artifacts oscillate between 40.3% in layer C and 82.5% in layer B1-B3, depending on the intensity of occupation  of the site (Kuhn et al., 2009).
+
+The classification of blank types shows that flakes are significantly less represented than laminar blanks across all studied layers, with slightly higher percentages observed in layers XIII and XX (Table S4). However, flakes are much more numerous when considering the categories of tools and core-tools (Table S5). Flake tools are very high in layer XX and then again in the upper layers XIII-XIB, where many of them can be classified as carinated or burin cores (see below). Overall, when considering all layers collectively, blades account for 49.2% of the tools, while flakes constitute 44.4%. In contrast, the blank category reveals that blades represent 72.3% compared to just 19.5% for flakes (Fig. S1), suggesting that flakes were more often collected when found modified.
+
+The small frequency of flakes across the blank assemblages cannot be solely the result of the production targets, as the preparation and maintenance stages of laminar cores results in the frequent production of flakes. As an example, there is a clearly higher number of flakes with cortical coverage across all layers at Ksar Akil (Fig. S2). To further explore the preservation of cortical blanks, we examined the percentage of cortex coverage across the main lithic classes (i.e., blanks, tools, and cores). Among blanks, the number of lithics with cortex coverage exceeding 33% is exceptionally low, ranging from 0.1% (100% cortex) to 3.2% (33-66% cortex) (Table S6).
+
+If this number is compared to the non-retouched blanks from Üçağızlı Cave (Table S7), two main observations are apparent. First, the percentage of non cortical elements is more unstable compared to Ksar Akil, with percentages that range from ca. 60% to ca. 82%, indicating shifting site-use strategies (Kuhn et al., 2009; Kuhn, 2013) comparted to the selective collection at Ksar Akil. Second, the percentage of blanks with a cortical coverage above 25% at Üçağızlı is clearly higher. At Ksar Akil, counterintuitively, it is among tools that lithics with higher cortical coverage (> 33%) are found slightly more often (Table S8). These findings on modified and unmodified blanks are in striking contrast with the quantification of cortex coverage among cores,  with cores exhibiting no cortex dropping to 50% (Table S9). This is clearly visible when all layers are merged and the cortex coverage percentage of blanks, cores, and tools is compared (Fig. S3). 
+Concerning the blank quantification, results are also noteworthy. Within the category of laminar blanks, blades are notably more prevalent than bladelets, with a slight increase in bladelet representation only in layers XII and XIB (Fig. S4). To explore whether the low number of bladelets is the result of poor sieving of the sediments, we compared the lengths of the last laminar removals on cores with the length values of all complete blanks and tools. Figure S5 shows that the density of the length values of the cores’ last negatives has a very different distribution compared to both blanks and tools, comprising a large number of short blanks. The overlap is particularly less marked in the uppermost layers XIB–XIII. Overall, while the size of the last negatives does reflect patterns of core reduction intensity and sought-out products could have been frequently removed from the site, it is unlikely that so few small-sized blanks were discarded preserved at the site.
+
+It is thus reasonable to conclude that bladelets were not systematically collected during excavations. The collection bias, however, is not homogeneous across the sequence due to differences in the production targets. If cores are classified according to their production targets at discard (Table S10), the collected blanks in the lower layers reflect more closely the objectives of the core reduction (i.e., blades), whereas the upper layers have a more marked focus on the production of bladelets. This is also confirmed by a higher share of tools made on bladelets in layers XIB and XII (see Table S5). Interestingly, shorter tools were more frequently collected in these upper layers, considering the less  marked overlap between blanks and tools in layers XIB and XII, with several tools being smaller than blanks (see Fig. S5).
+
+<br>
+
+## Supplementary Note 2: OxCal code - KDE models
+
+<br>
+
+```
+Plot()
+ {
+  KDE_Model("Protoaurignacian", N(0,1), U(0,1))
+  {
+   Resolution=100;
+   Curve("IntCal20","intcal20.14c");
+   Curve("Marine20","Marine20.14c");
+   Curve("=IntCal20");
+   R_Date("Kozarnika-VII(5c)-GifA-99706",36200,540);
+   R_Date("Kozarnika-VII(5c)-GifA101050",37170,700);
+   R_Date("Kozarnika-VII(5c)-GifLSM-10994",38700,140);
+   R_Date("Kozarnika-VII(5c)-GifA-99662",39310,100);
+   Date("Kozarnika-VII(5c)-Koz3",N(2015-33000,2000));
+   Date("Romanesti-Dumbravita-GH3-TL",N(2022-40600,1500));
+   Date("Romanesti-Dumbravita-GH3-Rom-86-221-2",N(2022-39300,4600));
+   R_Date("Fumane-A1-GT1088",36310,750);
+   R_Date("Fumane-A2-OxA-17569",35640,220);
+   R_Date("Fumane-A2-OxA-19584",35850,310);
+   R_Date("Fumane-A2-OxA-19414",34180,270);
+   R_Date("Fumane-A2-OxA-19412",34940,280);
+   R_Date("Fumane-A2-OxA-17570",35180,220);
+   R_Date("Fumane-A2-OxA-21796",35400,750);
+   Curve("=Marine20");
+   Delta_R("=Undefined Local Marine");
+   R_Date("Mochi-G-OxA-20360",31960,150);
+   R_Date("Mochi-G-OxA-19802",30770,150);
+   R_Date("Mochi-G-OxA-20630",33180,230);
+   R_Date("Mochi-G-OxA-19290",36750,210);
+   Curve("=IntCal20");
+   R_Date("Mochi-G-OxA-19569",36350,260);
+   Curve("=Marine20");
+   Delta_R("=Undefined Local Marine");
+   R_Date("Mochi-G-OxA-30629",31920,190);
+   R_Date("Mochi-G-OxA-35352",31870,160);
+   Curve("=IntCal20");
+   R_Date("Mochi-H-OxA-X-2579-40",35550,550);
+   Curve("=Marine20");
+   Delta_R("=Undefined Local Marine");
+   R_Date("Mochi-H-OxA-30736",31580,200);
+   Curve("=IntCal20");
+   R_Date("Mochi-G-OxA-3588",32280,580);
+   R_Date("Mochi-G-OxA-3589",33400,750);
+   R_Date("Mochi-G-OxA-3590",34680,760);
+   R_Date("Mochi-G-OxA-3591",35700,850);
+   R_Date("Mochi-G-OxA-3592",34870,800);
+   R_Date("Mochi-G-Rome-2",37400,1300);
+   R_Date("Bombrini-A1-Beta183522",33090,400);
+   R_Date("Bombrini-A1-Beta183524",32580,400);
+   R_Date("Bombrini-A2-Beta204028",34190,500);
+   R_Date("Bombrini-A1-S-EVA29022",34030,260);
+   R_Date("Bombrini-A1-S-EVA29026",33220,240);
+   R_Date("Bombrini-A1-S-EVA29023",32750,230);
+   R_Date("Bombrini-A1-S-EVA29021",32210,150);
+   R_Date("Bombrini-A2-S-EVA29017",35600,310);
+   R_Date("Bombrini-A2-S-EVA29015",34810,280);
+   R_Date("Bombrini-A2-S-EVA29016",30810,190);
+   R_Date("Bombrini-A2-S-EVA29895",32230,140);
+   Date("Castelcivita-rsa'-CTC_X7023_SB6",N(2020-42400,3700));
+   R_Date("Mandrin-B1-OxA-X-2286-9",38900,1100);
+   R_Date("Mandrin-B1-OxA-22118",31050,400);
+   R_Date("Mandrin-B1-OxA-2352-51",32950,650);
+   R_Date("Mandrin-B1-OxA-X-2283-11",35150,650);
+   R_Date("EsquichoGrapaou-SLC1b-OxA-21716",35900,800);
+   R_Date("EsquichoGrapaou-SLC1b-OxA-21732",36500,1000);
+   R_Date("EsquichoGrapaou-SLC1b-OxA-21717",35500,750);
+   R_Date("LesCottés-04lower-S-EVA13671",33710,230);
+   R_Date("LesCottés-04lower-S-EVA13672",34080,250);
+   R_Date("LesCottés-04lower-S-EVA13663",33080,250);
+   R_Date("LesCottés-04lower-S-EVA13665",34620,390);
+   R_Date("LesCottés-04lower-S-EVA13669",34430,180);
+   Date("LesCottés-04lower-LC10-11",N(2010-40300,2000));
+   R_Date("LesCottés-04lower-S-EVA9713",35150,280);
+   R_Date("GrotteduRenne-VII-OxA-21682",35000,650);
+   R_Date("GrotteduRenne-VII-OxA-21569",36500,1300);
+   R_Date("GrotteduRenne-VII-OxA-21570",34600,800);
+   R_Date("GrotteduRenne-VII-OxA-21571",34050,750);
+   R_Date("GrotteduRenne-VII-OxA-21572",34600,750);
+   R_Date("Isturitz-C4d1-AA69187",40000,2800);
+   R_Date("Isturitz-C4d1-OxA-23432-33",37000,566);
+   R_Date("Isturitz-C4d1-OxA-23434",37000,800);
+   R_Date("Isturitz-C4d1-OxA-23435",37500,900);
+   R_Date("Isturitz-C4d1-OxA-23436",37400,900);
+   R_Date("Isturitz-C5a-OxA-X-2694-17",38900,1000);
+   R_Date("Gatzarria-cjn2-OxA-22553",33800,550);
+   R_Date("Gatzarria-cjn2-OxA-22554",36300,700);
+   R_Date("Arbreda-H-SANU-29018",32750,450);
+   R_Date("Arbreda-H-SANU-29017",34800,760);
+   R_Date("Arbreda-H-SANU-29019",35900,860);
+   R_Date("Arbreda-H-SANU-29016",35700,830);
+   R_Date("Arbreda-H-SANU-29014",31900,530);
+   R_Date("Arbreda-H-OxA-21674",33800,550);
+   R_Date("Arbreda-H-OxA-21665",35850,700);
+   R_Date("Arbreda-H-OxA-21784",36000,700);
+   R_Date("Arbreda-H-OxA-21664",35900,650);
+   R_Date("Arbreda-H-OxA-3730",35480,820);
+   R_Date("LabekoKoba-VII-OxA-21793",35400,650);
+   R_Date("LabekoKoba-VII-OxA-21840",35250,650);
+   R_Date("LabekoKoba-VII-OxA-X-2314-43",36500,750);
+   R_Date("LabekoKoba-VII-OxA-21766",36850,800);
+   R_Date("Mochi-8-Gifa-96263",36590,770);
+   R_Date("Serino-OxA-21869",34830,330);
+   R_Date("Serino-OxA-22061",34300,1100);
+   R_Date("Serino-OxA-21870",34530,310);
+   R_Date("Serino-OxA-22626",34760,360);
+   R_Date("Serino-OxA-22583",34400,450);
+   R_Date("La-Vina-LY-6390",36500,750);
+   R_Date("Krems-KN-654",35500,2000);
+  };
+ };
+ Plot()
+ {
+  KDE_Model("Northern Ahmarian", N(0,1), U(0,1))
+  {
+   Resolution=100;
+   Curve("IntCal20","intcal20.14c");
+   Curve("Marine20","Marine20.14c");
+   Curve("=IntCal20");
+   R_Date("Üçağızlı-B1-3-AA-42320",31900,450);
+   R_Date("Üçağızlı-B1-3-AA-38021",32670,760);
+   R_Date("Üçağızlı-B1-3-AA-42317",34580,620);
+   R_Date("Üçağızlı-C-AA-42321",29060,330);
+   Curve("=Marine20");
+   Delta_R("=Undefined Local Marine");
+   R_Date("Üçağızlı-B-AA-38203",29130,380);
+   R_Date("Üçağızlı-B-OxA-X-2338-55",36270,240);
+   R_Date("Üçağızlı-B1-B3-OxA-21116",35240,260);
+   Curve("=IntCal20");
+   R_Date("Kebara-IV-Pta-5141",43700,1800);
+   R_Date("Kebara-IVB-Pta-5002",42500,1800);
+   R_Date("Kebara-IVB-Pta-4987",42100,2100);
+   R_Date("Kebara-IV-OxA-X-2264-29",40500,1200);
+   R_Date("Kebara-IV-OxA-V-2269-35",36110,330);
+   R_Date("Kebara-IV-OxA-18801",35160,310);
+   R_Date("Kebara-IV-OxA-18402",40300,550);
+   R_Date("Kebara-IV-OxA-V-2253-45",43600,600);
+   R_Date("Kebara-IV-OxA-18459",40400,400);
+   R_Date("Kebara-IV-OxA-V-2253-44",41650,450);
+   R_Date("Kebara-IIIBf-OxA-18425",41200,450);
+   R_Date("Kebara-IIIBf-OxA-18424",40350,400);
+   R_Date("Kebara-IIIb-OxA-X-2222-32",41400,1200);
+   R_Date("Kebara-IIIb-OxA-V-2220-41",42850,550);
+   R_Date("Kebara-IIIbf-OxA-18791",42800,650);
+   R_Date("Kebara-IIIbf-OxA-V-2220-42",42600,500);
+   R_Date("Kebara-IIIb-OxA-18458",41050,450);
+   R_Date("Kebara-IIIb-OxA-V-2253-42",40600,400);
+   R_Date("Kebara-IIIb-OxA-V-2253-43",40500,400);
+   R_Date("Kebara-IIIB-OxA-3976",43500,2200);
+   R_Date("Kebara-IIIB-Pta-4267",36100,1100);
+   R_Date("Kebara-IIIBf-OxA-1567",35600,1600);
+   Curve("=Marine20");
+   Delta_R("=Undefined Local Marine");
+   R_Date("KsaAkil-XX-OxA-20879",35010,240);
+   R_Date("KsaAkil-XIX-OxA-X-2361-14",32960,160);
+   R_Date("KsaAkil-XIX-OxA-22664",35510,210);
+   R_Date("KsaAkil-XVII-OxA-20486",35780,240);
+   R_Date("KsaAkil-XVII-OxA-25652",33300,230);
+   R_Date("KsaAkil-XVII-OxA-20487",33930,220);
+   R_Date("KsaAkil-XVII-OxA-22269",35390,250);
+   R_Date("KsaAkil-XVII-OxA-20877",36270,240);
+   R_Date("KsaAkil-XVII-OxA-X-2342-57",28130,110);
+   R_Date("KsaAkil-XVIII-OxA-20488",34230,210);
+   R_Date("KsaAkil-XVIII-OxA-25653",34830,240);
+   R_Date("KsaAkil-XVIII-OxA-X-2338-8",33760,210);
+   R_Date("KsaAkil-XVI-OxA-22665",36040,340);
+   R_Date("KsaAkil-XVI-GrA-54847",39910,370);
+   R_Date("KsaAkil-XVI-GrA-57544",35960,230);
+   R_Date("KsaAkil-XVI-GrA-57598",37320,270);
+   R_Date("KsaAkil-XVI-GrA-57599",39890,310);
+   R_Date("KsaAkil-XVII-GrA-53001",34090,220);
+   R_Date("KsaAkil-XVII-GrA-54846",39850,340);
+   R_Date("KsaAkil-XVII-GrA-57602",36730,240);
+   R_Date("KsaAkil-XVII-GrA-57603",38260,260);
+   R_Date("KsaAkil-XVIII-GrA-57542",36290,240);
+   R_Date("KsaAkil-XIX-GrA-53004",39390,330);
+   R_Date("KsaAkil-XX-GrA-57597",40040,340);
+   Curve("=IntCal20");
+   R_Date("Qafzeh-11-GifA-97338",31520,490);
+   R_Date("Qafzeh-11-AA-27290",29320,360);
+   R_Date("Manot-6-RTD-7785.1",32410,260);
+   R_Date("Manot-6-RTD-7785.2",32900,150);
+   R_Date("Manot-6-RTD-7786.1",28940,180);
+   R_Date("Manot-6-RTD-7786.2",28850,100);
+   R_Date("Manot-6-RTD-7086",38880,310);
+   R_Date("Manot-6-RTD-7087",41790,380);
+   R_Date("Manot-6-RTD-7128B",28560,150);
+   R_Date("Manot-6-RTD-7118",40280,320);
+   R_Date("Manot-6-RTD-7119",42310,380);
+   R_Date("Manot-6-RTD-7130B",30860,180);
+   R_Date("Manot-6-RTD-7117",41610,540);
+   R_Date("Manot-6-RTD-7129B",31270,190);
+   R_Date("Manot-6-RTD-7197.1",37330,300);
+   R_Date("Manot-6-RTD-7197.2",37120,300);
+   R_Date("Manot-7-RTD-7115",42210,390);
+   R_Date("Manot-7-RTD-7127B",25080,110);
+   R_Date("Manot-7-RTD-7196",41100,450);
+  };
+ };
+ Plot()
+ {
+  KDE_Model("Southern Ahmarian", N(0,1), U(0,1))
+  {
+   Resolution=100;
+   Curve("IntCal20","intcal20.14c");
+   Curve("Marine20","Marine20.14c");
+   Curve("=IntCal20");
+   R_Date("Al-Ansab1-AH1-AN001",32869,409);
+   R_Date("Al-Ansab1-AH1-AN002",33041,419);
+   R_Date("Al-Ansab1-AH1-AN003",33292,432);
+   R_Date("Al-Ansab1-AH1-AN004",33564,444);
+   R_Date("Al-Ansab1-AH1-AN005",33552,460);
+   R_Date("Al-Ansab1-AH1-AN006",32927,439);
+   R_Date("Al-Ansab1-AH1-AN007",33447,440);
+   R_Date("Qseimeh-I-DRI-2965",34010,510);
+   Curve("=Marine20");
+   Delta_R("=Undefined Local Marine");
+   R_Date("QadeshBarnea501--Pta-2819",33800,940);
+   Curve("=IntCal20");
+   R_Date("QadeshBarnea601--Pta-2964",32470,780);
+   R_Date("QadeshBarnea601--Pta-2941",34300,1000);
+   R_Date("Qseimeh-II",30500,330);
+   R_Date("AbuNoshraII--SMU-2122",38924,1529);
+   R_Date("AbuNoshraII--ETH-3076",33940,790);
+   R_Date("AbuNoshraII--ETH-3075",33470,680);
+   R_Date("AbuNoshraII--SMU-1762",31585,2275);
+   R_Date("AbuNoshraII--SMU-1772",31023,8537);
+   R_Date("AbuNoshraVI--SMU-2371",31100,300);
+   R_Date("AbuNoshraI--SMU-2254",35824,1090);
+   R_Date("AbuNoshraI--SMU-2007",35805,1520);
+   R_Date("AbuNoshraI--SMU-1824",31330,2880);
+   R_Date("AbuNoshraI--B-13198",29580,1610);
+   R_Date("AbuNoshraI--B-13197",25950,360);
+   R_Date("BokerA--SMU-578",37920,2810);
+   R_Date("Lagama-VII-SMU-172",34170,3670);
+   R_Date("Lagama-VII.2-SMU-185",31210,2780);
+   R_Date("Lagama-VIII D-SMU-119",32980,2410);
+   R_Date("Lagama-VIII-SMU-118",30050,1240);
+   R_Date("Boker BE III--SMU-188",27450,1300);
+   R_Date("Boker BE III--SMU229",26660,500);
+   R_Date("Boker BE III--SMU228",26030,600);
+   R_Date("Boker-BE-II-SMU-227",26950,520);
+   R_Date("Boker-BE-II--SMU-565",24630,390);
+   R_Date("Thalab al-Buhayla E--Beta-129817",24900,130);
+   R_Date("Thalab al-Buhayla C--Beta-129818",25680,100);
+  };
+ };
+ Plot()
+ {
+   Resolution=100;
+   Curve("IntCal20","intcal20.14c");
+   Curve("Marine20","Marine20.14c");
+   Curve("=Marine20");
+   Delta_R("=Undefined Local Marine");  
+   R_Date("KsarAkil-XII-OxA-20024",35520,200);
+ };
+ Plot()
+ {
+   Resolution=100;
+   Curve("IntCal20","intcal20.14c");
+   Curve("Marine20","Marine20.14c");
+   Curve("=Marine20");
+   Delta_R("=Undefined Local Marine");  
+   R_Date("KsarAkil-XII-GrA-57545",35880,260);
+ };
+ Plot()
+ {
+   Resolution=100;
+   Curve("IntCal20","intcal20.14c");
+   Curve("Marine20","Marine20.14c");
+   Curve("=Marine20");
+   Delta_R("=Undefined Local Marine");  
+   R_Date("KsarAkil-XI-GrA-53006",34310,230);
+ };
+``` 
+    **To do:** merge the C14 dates not modeled, consider divide the NEA into Kebara/Manot end the rest.
+
+<br>
+
+## Supplementary Note 3: OxCal code - post northern Ahmarian
+
+<br>
+
+```
+ Plot()
+ {
+  Resolution=100;
+  Curve("IntCal20","intcal20.14c");
+  Curve("Marine20","Marine20.14c");
+  Curve("=Marine20");
+  Delta_R("=Undefined Local Marine");
+  R_Date("KsarAkil-XII-GrA-57545",35880,260);
+  R_Date("KsarAkil-XII-OxA-20024",35520,200);
+  R_Date("KsarAkil-XI-GrA-53006",34310,230);
+  R_Date("KsarAkil-X-OxA-25585",34550,250);
+  Curve("=IntCal20");
+  R_Date("Wadi-Kharar-16R--IAAA-103837",33130,160);
+  R_Date("Baaz-VII-KIA30309",34200,1460);
+  R_Date("Baaz-VII-KIA30310",32060,600);
+  R_Date("Umm el-Tlel 2/level V--Gif-900/34",30310,670);
+  R_Date("Umm el-Tlel 2/level II2b-Gif-A-93212",30310,670);
+  R_Date("Qafzeh9-GifA-97337",28340,360);
+  R_Date("Qafzeh9-AA-27291",28020,320);
+  R_Date("Qafzeh9-GifA-98230",29060,390);
+  R_Date("Qafzeh9-AA-27292",28380,330);
+  R_Date("Qafzeh8-GifA-98229",27510,340);
+  R_Date("Qafzeh8-AA-27294",27080,270);
+  R_Date("Qafzeh8-GifA-97336",26720,300);
+  R_Date("Qafzeh8-AA-27289",27000,280);
+  R_Date("Qafzeh8-GifA-98231",28460,360);
+  R_Date("Qafzeh8-AA-27293",26540,280);
+ };
+```
+
+<br>
+
+## Supplementary Figures
+
+<br>
+
+### Figure S1
+```{r, warning=FALSE, echo=FALSE, fig.cap="**Figure S1.** Comparison of blank types across layers for blanks and tools. The chart displays the percentage distribution of blank categories (Blade, Bladelet, and Flake) within each layer, allowing for a visual comparison between the two categories.", fig.width=9, fig.height=6}
+# Prepare the data for blanks
+data_blanks <- dataset %>%
+  filter(Class == "Blank") %>%
+  filter(Blank.type %in% c("Blade", "Bladelet", "Flake")) %>%
+  group_by(Layer, Blank.type) %>%
+  summarise(Count = n(), .groups = 'drop') %>%
+  group_by(Layer) %>%
+  mutate(Percentage = Count / sum(Count) * 100) %>%
+  ungroup() %>%
+  mutate(Category = "Blanks")
+
+# Prepare the data for tools
+data_tools <- dataset %>%
+  filter(Class %in% c("Tool", "Core-Tool")) %>%
+  filter(Blank.type %in% c("Blade", "Bladelet", "Flake")) %>%
+  group_by(Layer, Blank.type) %>%
+  summarise(Count = n(), .groups = 'drop') %>%
+  group_by(Layer) %>%
+  mutate(Percentage = Count / sum(Count) * 100) %>%
+  ungroup() %>%
+  mutate(Category = "Tools")
+
+# Combine the datasets
+data_combined <- bind_rows(data_blanks, data_tools)
+
+# Reorder layers as specified
+data_combined$Layer <- fct_relevel(data_combined$Layer, "XX", "XIXB", "XIXA", "XVIII", "XVII", "XVI", "XIII", "XII", "XIB")
+
+# Create the stacked bar chart with percentages to compare blanks and tools
+ggplot(data_combined, aes(x = Layer, y = Percentage, fill = Blank.type)) +
+  geom_bar(stat = "identity", position = "stack") +
+  facet_wrap(~ Category) +
+  labs(x = "Layer", y = "Percentage") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  theme_minimal(base_size = 15) +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+
+```
+
+<br>
+
+### Figure S2
+```{r, echo=FALSE, warning=FALSE, fig.cap="**Figure S2.** Comparison of cortical presence in blades and flakes across different layers. The bars represent the percentage of blades and flakes categorized by cortex presence ('Yes' for cortical and 'No' for non-cortical) within each layer.", fig.width=9, fig.height=6}
+# Prepare the cortex comparison data with releveling layers
+cortex_comparison <- dataset %>%
+  mutate(Cortex_Category = case_when(
+    Cortex %in% c("1-33%", "33-66%", "66-99%", "100%") ~ "Yes",
+    Cortex == "0%" ~ "No",
+    TRUE ~ NA_character_  # Handle any other cases if necessary
+  )) %>%
+  filter(Blank.type %in% c("Blade", "Flake")) %>%  # Focus on blades and flakes
+  group_by(Layer, Blank.type, Cortex_Category) %>%  # Group by Layer, Blank.type, and Cortex_Category
+  summarise(Count = n(), .groups = 'drop') %>%
+  group_by(Layer, Blank.type) %>%  # Group again to calculate percentages within Blank.type
+  mutate(Percentage = Count / sum(Count) * 100) %>%
+  ungroup() %>%
+  mutate(Layer = fct_relevel(Layer, "XX", "XIXB", "XIXA", "XVIII", "XVII", "XVI", "XIII", "XII", "XIB"))  # Relevel layers
+
+# Create the bar plot
+ggplot(cortex_comparison, aes(x = Blank.type, y = Percentage, fill = Cortex_Category)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Side-by-side bars
+  labs(x = "Blank Type", y = "Percentage (%)", fill = "Presence of Cortex") +  # Set legend title here
+  facet_wrap(~ Layer) +  # Separate facets for each layer
+  scale_fill_manual(values = c("Yes" = "steelblue", "No" = "tomato")) +
+  theme_minimal(base_size = 15) +
+  theme(legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+```
+
+<br>
+
+### Figure S3
+```{r, warning=FALSE, echo=FALSE, fig.width=9}
+plot_data <- dataset %>%
+  mutate(Class = recode(Class, "Core-Tool" = "Core")) %>%  # Merge Core-tool with Core
+  filter(Class %in% c("Core", "Tool", "Blank")) %>%  # Remove NA values
+  mutate(Cortex = fct_relevel(Cortex, "0%", "1-33%", "33-66%", "66-99%", "100%")) %>%
+  group_by(Class, Cortex) %>%
+  tally() %>%
+  ungroup() %>%
+  group_by(Class) %>%
+  mutate(percentage = n / sum(n) * 100)  # Calculate percentage of each Cortex category per Class
+
+ggplot(plot_data, aes(x = Cortex, y = percentage, group = Class, color = Class)) +
+  geom_line(size = 1) +
+  geom_point(size = 3) +  # Add points to make it clearer
+  labs(title = "Cortex Distribution by Class",
+       x = "Cortex Category",
+       y = "Percentage",
+       color = "Class Category") +
+  theme_minimal() +
+  theme(text = element_text(family = "Times New Roman"),
+        axis.text.x = element_text(angle = 45, hjust = 1)) 
+  # scale_color_manual(values = c("Core" = "#66c2a5", "Other" = "#fc8d62"))  # Customize colors for Class categories
+```
+
+<br>
+
+### Figure S4
+
+```{r, echo=FALSE, warning=FALSE, fig.cap="  **Figure 1.** Changes in class composition across layers. The lines highlight the percentage distribution of each class across the sequence. Blanks and tools are merged", fig.width=9}
+# Prepare the data with releveling layers
+data.quantification.long <- dataset %>%
+  filter(Blank.type %in% c("Blade", "Bladelet", "Flake")) %>%
+  group_by(Layer, Blank.type) %>%
+  summarise(Count = n(), .groups = 'drop') %>%
+  group_by(Layer) %>%
+  mutate(Percentage = Count / sum(Count) * 100) %>%
+  ungroup() %>%
+  mutate(Layer = fct_relevel(Layer, "XX", "XIXB", "XIXA", "XVIII", "XVII", "XVI", "XIII", "XII", "XIB"))  # Relevel layers
+
+# Create enhanced line plot without title
+ggplot(data.quantification.long, aes(x = Layer, y = Percentage, color = Blank.type, group = Blank.type)) +
+  geom_line(size = 1) +
+  geom_point(size = 3) +
+  labs(x = "Layer", y = "Percentage") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  theme_minimal(base_size = 15) +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank(),
+        plot.title = element_blank())
+```
+
+<br>
+
+### Figure S5
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=6}
+# Create Group 1: Complete Blades and Bladelets from Layer XIB
+complete_entries_blanks <- dataset %>%
+  filter(Class == "Blank",
+         Layer != "XX",
+         Blank.type %in% c("Blade", "Bladelet"), 
+         Preservation == "Complete") %>%
+  select(Length, Width, Layer)
+
+complete_entries_tools <- dataset %>%
+  filter(Class == "Tool",
+         Layer != "XX",
+         Blank.type %in% c("Blade", "Bladelet"), 
+         Preservation == "Complete") %>%
+  select(Length, Width, Layer)
+
+# Create Group 3: Last Removal entries from Layer XIB
+last_removal_entries <- dataset %>%
+  filter(Last.removal.blank %in% c("Blade", "Bladelet"),
+         Layer != "XX") %>%
+  select(`Last.removal.length`, `Last.removal.width`, Layer) %>%
+  rename(Length = `Last.removal.length`, Width = `Last.removal.width`)
+
+
+ggplot() +
+  geom_density(data = complete_entries_tools, aes(x = Length, fill = "Tools"), alpha = 0.5) +
+  geom_density(data = complete_entries_blanks, aes(x = Length, fill = "Blanks"), alpha = 0.5) +
+  geom_density(data = last_removal_entries, aes(x = Length, fill = "Last Removal"), alpha = 0.5) +
+  labs(title = "",
+       x = "Length",
+       y = "Density",
+       fill = "Category") +
+  theme_minimal() +
+  facet_wrap(~ Layer) 
+```
+  **Figure S5**. Density Plot of Length. Layer XX is excluded since no cores were found there in unit F5.
+
+<br>
+
+### Figure S6
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=6}
+# Step 1: Filter the dataset to include only the Blank class and apply transformations to Blank.production
+Core.datasets.fig <- Core.dataset %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  filter(!(Blank.production %in% c("Flake", "flake", "Undetermined"))) %>%
+  mutate(
+    Blank.production = case_when(
+      Blank.production %in% c("Blade;Bladelet", "Blade;Bladelet;Flake") ~ "Blade-Bladelet",  # Combine Blade-Bladelet categories
+      Blank.production %in% c("Blade;Flake", "Blade-Flake") ~ "Blade",  # Combine Blade categories
+      Blank.production %in% c("Bladelet;Flake", "Bladelet-Flake") ~ "Bladelet",  # Combine Bladelet categories
+      TRUE ~ Blank.production  # Keep other values unchanged
+    )
+  )
+
+
+laminar.blanks.on.core <- Core.datasets.fig %>%
+  ggstatsplot::ggbarstats(
+    x = Blank.production,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+
+laminar.blanks.on.core
+
+# ggsave("../output/ppt_figures/Laminar_Scars.png", laminar.blanks.on.core, dpi = 300, width = 10, height = 6)
+
+
+# # Step 2: Summarize counts of Blank types across Layers and calculate percentages
+# Core.datasets.fig.summary <- Core.datasets.fig %>%
+#   group_by(Layer, Blank.production) %>%
+#   summarise(Count = n(), .groups = 'drop') %>%
+#   arrange(Layer, Blank.production) %>%
+#   group_by(Layer) %>%
+#   mutate(Percentage = Count / sum(Count))  # Calculate percentage within each Layer
+# 
+# # Step 3: Create a stacked bar plot for percentages
+# ggplot(Core.datasets.fig.summary, aes(x = Layer, y = Percentage, fill = Blank.production)) +
+#   geom_bar(stat = "identity", position = "fill") +  # Use position = "fill" to make the bars sum to 100%
+#   labs(title = "",
+#        x = "Layer",
+#        y = "Percentage",
+#        fill = "Blank Production Type") +
+#   scale_y_continuous(labels = scales::percent_format(scale = 1)) +  # Format y-axis as percentage
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for better readability
+#   scale_fill_brewer(palette = "Set1")  # Use a color palette for better visualization
+
+```
+
+<br>
+
+### Figure S7
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+platform.figure <- MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Platform.type,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+
+platform.figure
+
+# ggsave("../output/ppt_figures/Platform_Type.png", platform.figure, dpi = 300, width = 10, height = 8)
+```
+
+<br>
+
+### Figure S8
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Platform.shape,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S9
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Bulb.type,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S10
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Lip.type,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S11
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Elongation,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S12
+
+```{r, echo=FALSE, warning=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S12.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the caption below
+```
+
+<br>
+
+### Figure S13
+
+```{r, echo=FALSE, warning=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S13.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the caption below
+```
+
+<br>
+
+### Figure S14
+
+```{r, echo=FALSE, warning=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S14.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the caption below
+```
+
+<br>
+
+### Figure S15
+
+```{r, echo=FALSE, warning=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S15.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the caption below
+```
+
+<br>
+
+### Figure S16
+
+```{r, echo=FALSE, warning=FALSE, fig.width=10}
+knitr::include_graphics("../output/SI_figures/Figure_S16.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the caption below
+```
+
+<br>
+
+### Figure S17
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S17.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the caption below
+```
+
+<br>
+
+### Figure S18
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S18.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the caption below
+```
+
+<br>
+
+### Figure S19
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S19.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the caption below
+```
+
+<br>
+
+### Figure S20
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.direction %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Scar.patt,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S21
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.direction %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Scar.nr,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S22
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S22.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the caption below
+```
+
+<br>
+
+### Figure S23
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S23.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the 
+```
+
+<br>
+
+### Figure S24
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S24.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the 
+```
+
+<br>
+
+### Figure S25
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S25.png")
+# in the R chunk you can add "fig.cap="Screeplot"" to put the
+```
+
+
+<br>
+
+### Figure S26
+
+```{r, echo=FALSE, fig.width=10}
+knitr::include_graphics("../output/SI_figures/Figure_S26.png")
+```
+
+<br>
+
+### Figure S27
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S27.png")
+```
+
+<br>
+
+### Figure S28
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S28.png")
+```
+
+<br>
+
+### Figure S29
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S29.png")
+```
+
+<br>
+
+### Figure S30
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Curvature,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S31
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Torsion,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S32
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Blank.shape,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S33
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Distal.end,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Layer"))
+```
+
+<br>
+
+### Figure S34
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Robustness,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Index"))
+```
+
+<br>
+
+### Figure S35
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S35.png")
+```
+
+<br>
+
+### Figure S36
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S36.png")
+```
+
+<br>
+
+### Figure S37
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S37.png")
+```
+
+<br>
+
+### Figure S38
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S38.png")
+```
+
+<br>
+
+### Figure S39
+
+```{r, echo=FALSE, fig.width=10}
+knitr::include_graphics("../output/SI_figures/Figure_S39.png")
+```
+
+<br>
+
+### Figure S40
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S40.png")
+```
+
+<br>
+
+### Figure S41
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S41.png")
+```
+
+<br>
+
+### Figure S42
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S42.png")
+```
+
+<br>
+
+### Figure S43
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+knapping.direction <- MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  ggstatsplot::ggbarstats(
+    x = Flaking.surface,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Flaking surface"))
+
+knapping.direction
+
+# ggsave("../output/ppt_figures/Knapping_Direction.png", knapping.direction, dpi = 300, width = 10, height = 8)
+```
+
+<br>
+
+### Figure S44
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  ggstatsplot::ggbarstats(
+    x = Reduction.pattern,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Reduction pattern"))
+```
+
+<br>
+
+### Figure S45
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  ggstatsplot::ggbarstats(
+    x = Platform.nr,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Number of platforms"))
+```
+
+<br>
+
+### Figure S46
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  ggstatsplot::ggbarstats(
+    x = Elo,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Elongation"))
+```
+
+<br>
+
+### Figure S47
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  ggstatsplot::ggbarstats(
+    x = Flatt,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Flatness"))
+```
+
+<br>
+
+### Figure S48
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S48.png")
+```
+
+<br>
+
+### Figure S49
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S49.png")
+```
+
+<br>
+
+### Figure S50
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S50.png")
+```
+
+<br>
+
+### Figure S51
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S51.png")
+```
+
+<br>
+
+### Figure S52
+
+```{r, echo=FALSE, fig.width=10}
+knitr::include_graphics("../output/SI_figures/Figure_S52.png")
+```
+
+<br>
+
+### Figure S53
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S53.png")
+```
+
+<br>
+
+### Figure S54
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S54.png")
+```
+
+<br>
+
+### Figure S55
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S55.png")
+```
+
+<br>
+
+### Figure S56
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Cortex,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Cortex"))
+```
+
+<br>
+
+### Figure S57
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Elongation,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Cortex"))
+```
+
+<br>
+
+### Figure S58
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Robustness,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Flatness"))
+```
+
+<br>
+
+### Figure S59
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Curvature,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Curvature"))
+```
+
+<br>
+
+### Figure S60
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Torsion,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Twisting"))
+```
+
+<br>
+
+### Figure S61
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Blank.shape,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Curvature"))
+```
+
+<br>
+
+### Figure S62
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Distal.end,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Curvature"))
+```
+
+<br>
+
+### Figure S63
+
+```{r, warning=FALSE, echo=FALSE, fig.width=9, fig.height=7}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  ggstatsplot::ggbarstats(
+    x = Retouch.position,  
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Retouch position"))
+```
+
+<br>
+
+### Figure S64
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S64.png")
+```
+
+<br>
+
+### Figure S65
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S65.png")
+```
+
+<br>
+
+### Figure S66
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S66.png")
+```
+
+<br>
+
+### Figure S67
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S67.png")
+```
+
+<br>
+
+### Figure S68
+
+```{r, echo=FALSE, fig.width=10}
+knitr::include_graphics("../output/SI_figures/Figure_S68.png")
+```
+
+<br>
+
+### Figure S69
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S69.png")
+```
+
+<br>
+
+### Figure S70
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S70.png")
+```
+
+<br>
+
+### Figure S71
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S71.png")
+```
+
+<br>
+
+### Figure S72
+
+```{r, echo=FALSE, fig.width=9, fig.height=7}
+dataset.extension <- dataset %>%
+  filter(Class == "Tool", Preservation == "Complete", Blank.type %in% c("Blade", "Bladelet"), !Layer %in% c("XX", "XIV", "XV"))
+
+typo.list.extension <- as.data.frame(table(dataset.extension$Typology.simplified))
+
+selected.tools <- c(
+  "Blade Aurignacian", "Blade pointed", "Blade retouched",
+  "Blade with convergent retouch", "Blade with lateral retouch",
+  "Blade with lateral retouch+Bec", "Blade with lateral retouch+Truncation",
+  "Bladelet retouched", "Bladelet with convergent retouch",
+  "Bladelet with lateral retouch", "Retouched blade", 
+  "Retouched bladelet", "Truncation"
+) #based on the table to check types above
+
+dataset.extension <- dataset.extension %>%
+  filter(Typology.simplified %in% selected.tools) %>%
+  mutate(Retouch.position = dplyr::recode(Retouch.position, Sporadic = "Direct"))
+
+dataset.extension %>%
+  mutate(Layer = fct_relevel(Layer, "XIXB", "XIXA", 
+                             "XVIII", "XVII", "XVI", 
+                             "XIII", "XII")) %>%
+  mutate(Layer = recode(Layer, "XIII" = "XIII-XII", "XII" = "XIII-XII")) %>%
+  ggstatsplot::ggbarstats(
+    x = Extension,
+    y = Layer,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Retouch extension"))
+```
+
+<br>
+
+### Figure S73
+
+```{r, echo=FALSE, fig.width=9}
+knitr::include_graphics("../output/SI_figures/Figure_S73.png")
+```
+
+<br>
+
+## Supplementary Tables
+
+<br>
+
+### Table S1
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  filter(Class %in% c("Blank")) %>%
+  filter(Blank.type %in% c("Blade", "Bladelet", "Flake")) %>%
+  mutate(Preservation = factor(Preservation, levels = c("Complete", "Complete almost", "Proximal", "Mesial", "Distal"))) %>%
+  tabyl(Layer, Preservation) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+  **Table S1.** Distribution of breakage categories across the studied layers, considering unretouched blanks (i.e., blades, bladelets, and flakes). Percentages are reported within brackets.
+
+<br>
+
+### Table S2
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  filter(Class %in% c("Tool", "Core-Tool")) %>%
+  filter(Blank.type %in% c("Blade", "Bladelet", "Flake")) %>%
+  filter(Preservation != "Undetermined") %>%
+  mutate(Preservation = factor(Preservation, levels = c("Complete", "Complete almost", "Proximal", "Mesial", "Distal"))) %>%
+  tabyl(Layer, Preservation) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+  **Table S2.**  Distribution of breakage categories across all analyzed layers for all tools and core-tools. Tools categorized as Undetermined or Other (e.g., pebbles) are excluded from this table. Percentages are reported within brackets.
+
+<br>
+
+### Table S3
+```{r, echo=FALSE, warning=FALSE}
+data.UG.fragm <- data.frame(
+  Group = c("B", "B1-B3", "C", "D", "E", "F", "G", "H", "I"),
+  whole = c(223, 276, 236, 41, 115, 279, 59, 1081, 206),
+  broken = c(489, 1299, 159, 51, 95, 277, 67, 1224, 181),
+  medial = c(53, 123, 31, 12, 23, 39, 10, 144, 24)
+)
+
+data.UG.fragm <- data.UG.fragm %>%
+  mutate(total = whole + broken,
+         whole_percentage = (whole / total) * 100,
+         broken_percentage = (broken / total) * 100,
+         medial_percentage = (medial / total) * 100)
+
+data.UG.fragm <- data.UG.fragm %>%
+  select(Layer = Group, 
+         Complete = whole,
+         Complete_percentage = whole_percentage, 
+         Broken = broken, 
+         Broken_percentage = broken_percentage, 
+         Mesial = medial, 
+         Mesial_percentage = medial_percentage,
+         total) %>%
+  mutate(Complete = paste(Complete, sprintf("(%0.1f%%)", Complete_percentage), sep = " "),
+         Broken = paste(Broken, sprintf("(%0.1f%%)", Broken_percentage), sep = " "),
+         Mesial = paste(Mesial, sprintf("(%0.1f%%)", Mesial_percentage), sep = " "),
+         total = as.character(round(total)))
+
+data.UG.fragm <- data.UG.fragm %>%
+  select(Layer, Complete, Broken, Mesial, total)
+
+ft <- flextable(data.UG.fragm) %>%
+  set_table_properties(layout = "autofit") %>%
+  compose(j = "Complete", value = as_paragraph(Complete)) %>%
+  compose(j = "Broken", value = as_paragraph(Broken)) %>%
+  compose(j = "Mesial", value = as_paragraph(Mesial)) %>%
+  compose(j = "total", value = as_paragraph(total)) %>%
+  theme_vanilla()
+
+ft
+```
+  **Table S3.** Distribution of breakage categories across the IUP and Ahmarian layers at Üçağızlı Cave for all unretouched blanks bigger than 15 mm. The percentage of the mesial fragments is calculated over the total number of fragments, as this is a subset of the broken category. Percentages are reported within brackets.
+
+<br>
+
+### Table S4
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  filter(Class %in% c("Blank")) %>%
+  filter(Blank.type != "Undetermined") %>%
+tabyl(Layer, Blank.type) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+  **Table S4.** Distribution of blank types across layers, taking into account only unmodified artifacts. Blanks categorized as "Undetermined" are excluded from this table. Percentages are reported within brackets.
+
+<br>
+
+### Table S5
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  filter(Class %in% c("Tool", "Core-Tool")) %>%
+  filter(Blank.type %in% c("Blade", "Bladelet", "Flake")) %>%
+tabyl(Layer, Blank.type) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+  **Table S5.** Distribution of blank types across layers, taking into account only tools and core-tools. Blanks categorized as "Undetermined" are excluded from this table. Percentages are reported within brackets.
+
+<br>
+
+### Table S6
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  filter(Class %in% c("Blank")) %>%
+  mutate(Cortex = fct_relevel(Cortex, "0%", "1-33%", "33-66%", "66-99%", "100%")) %>%
+  mutate(Cortex = recode(Cortex, `0` = "0%")) %>%
+  tabyl(Layer, Cortex) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+  **Table S6.** Distribution of cortex categories across layers for all blanks. Percentages are reported within brackets.
+
+<br>
+
+### Table S7
+```{r, echo=FALSE, warning=FALSE}
+data_UG_cortex <- data.frame(
+  Layer = c("B", "B1-B3", "C", "D", "E", "F", "G", "H", "I"),
+  `no ctx` = c(587, 1289, 246, 69, 145, 369, 75, 1380, 232),
+  `1-25%` = c(76, 184, 76, 14, 40, 117, 29, 459, 69),
+  `25-50%` = c(24, 52, 28, 7, 10, 34, 9, 203, 36),
+  `50-90%` = c(14, 27, 29, 2, 5, 23, 7, 112, 28),
+  `>90%` = c(11, 23, 16, 0, 10, 13, 6, 151, 22),
+  total = c(712, 1575, 395, 92, 210, 556, 126, 2305, 387)
+)
+
+# Rename columns to remove special characters and make them valid
+colnames(data_UG_cortex) <- c("Layer", "no_ctx", "X1_25", "X25_50", "X50_90", "X90_plus", "total")
+
+# Calculate the percentages for each category (excluding 'total' column)
+data_UG_cortex_percent <- data_UG_cortex %>%
+  mutate(
+    X1_25_perc = (X1_25 / total) * 100,
+    X25_50_perc = (X25_50 / total) * 100,
+    X50_90_perc = (X50_90 / total) * 100,
+    X90_plus_perc = (X90_plus / total) * 100,
+    no_ctx_perc = (no_ctx / total) * 100
+  )
+
+# Format the percentages to one decimal place and add them as text labels in the columns
+data_UG_cortex_percent <- data_UG_cortex_percent %>%
+  mutate(
+    X1_25 = paste(X1_25, sprintf("(%0.1f%%)", X1_25_perc), sep = " "),
+    X25_50 = paste(X25_50, sprintf("(%0.1f%%)", X25_50_perc), sep = " "),
+    X50_90 = paste(X50_90, sprintf("(%0.1f%%)", X50_90_perc), sep = " "),
+    X90_plus = paste(X90_plus, sprintf("(%0.1f%%)", X90_plus_perc), sep = " "),
+    no_ctx = paste(no_ctx, sprintf("(%0.1f%%)", no_ctx_perc), sep = " ")
+  ) %>%
+  select(Layer, no_ctx, X1_25, X25_50, X50_90, X90_plus, total) %>%
+  rename(
+    "No cortex" = no_ctx,
+    "1-25%" = X1_25,
+    "25-50%" = X25_50,
+    "50-90%" = X50_90,
+    ">90%" = X90_plus,
+    "Total" = total
+  )
+
+
+# Create the flextable and format it
+Table_UG_Cortex <- flextable(data_UG_cortex_percent) %>%
+  set_table_properties(layout = "autofit") %>%
+  theme_vanilla()
+
+# Print the flextable
+Table_UG_Cortex
+```
+  **Table S7.**
+
+<br>
+
+### Table S8
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  filter(Class %in% c("Tool")) %>%
+  mutate(Cortex = recode(Cortex, `0` = "0%")) %>%
+  mutate(Cortex = fct_relevel(Cortex, "0%", "1-33%", "33-66%", "66-99%", "100%")) %>%
+tabyl(Layer, Cortex) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+  **Table S8.** Distribution of cortex categories across layers for all tools.
+
+<br>
+
+### Table S9
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  filter(Class %in% c("Core", "Core-Tool")) %>%
+  mutate(Cortex = recode(Cortex, `0` = "0%")) %>%
+  mutate(Cortex = fct_relevel(Cortex, "0%", "1-33%", "33-66%", "66-99%", "100%")) %>%
+tabyl(Layer, Cortex) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+  **Table S9.** Distribution of cortex categories across layers for all cores.
+
+<br>
+
+### Table S10
+```{r, echo=FALSE, warning=FALSE}
+# Load required libraries if not already loaded
+library(dplyr)
+library(janitor)
+library(flextable)
+
+# Prepare the dataset and replace semicolons with hyphens in the Blank.production column
+dataset %>%
+  filter(Class %in% c("Core", "Core-Tool")) %>%
+  filter(Blank.production != "Undetermined") %>%
+  mutate(Blank.production = gsub(";", "-", Blank.production),
+         Blank.production = recode(Blank.production,
+                              `Blade-Bladelet-Flake` = "Blade-Bladelet")) %>%
+  tabyl(Layer, Blank.production) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+
+```
+  **Table S10.** Undetermined removed
+
+<br>
+
+### Table S11
+```{r, echo=FALSE, warning=FALSE}
+Data.PA.KA %>%
+  filter(Class %in% c("Blank")) %>%
+tabyl(Layer, Blank.type) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+  **Table S11.**
+
+<br>
+
+### Table S12
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  tabyl(Platform.type, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S13
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, 
+                             "CTC_rsa'.high", "CTC_rsa'.low", 
+                             "RB_A2-A1.high", "RB_A2-A1.low", 
+                             "RF_A2-A1.high", "RF_A2-A1.low", 
+                             "KA_XIB", "KA_XII", "KA_XIII", 
+                             "KA_XVI", "KA_XVII", "KA_XVIII", 
+                             "KA_XIXA", "KA_XIXB", "KA_XX")) %>%
+  tabyl(Layer, Platform.shape) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S14
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  tabyl(Bulb.type, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S15
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  tabyl(Lip.type, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S16
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.platform %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  tabyl(Elongation, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S17
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.direction %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  rename(`Scar pattern` = Scar.patt) %>%
+  tabyl(`Scar pattern`, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S18
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.direction %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  rename(`Scar number` = Scar.nr) %>%
+  tabyl(`Scar number`, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S19
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  tabyl(Curvature, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S20
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  tabyl(Torsion, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S21
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  rename(`Blank shape` = Blank.shape) %>%
+  tabyl(`Blank shape`, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S22
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  rename(`Distal end` = Distal.end) %>%
+  tabyl(`Distal end`, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S23
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.convexity %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RB_A2-A1.high", "CTC_rsa'.high", "RF_A2-A1.low", "RB_A2-A1.low", "CTC_rsa'.low")) %>%
+  tabyl(Robustness, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S24
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  rename(`Flaking surface` = Flaking.surface) %>%
+  tabyl(`Flaking surface`, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S25
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  rename(`Reduction pattern` = Reduction.pattern) %>%
+  tabyl(`Reduction pattern`, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S26
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  rename(`Platform number` = Platform.nr) %>%
+  tabyl(`Platform number`, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S27
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  rename(Elongation = Elo) %>%
+  tabyl(Elongation, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S28
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.core %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  rename(Flatness = Flatt) %>%
+  tabyl(Flatness, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S29
+
+```{r, echo=FALSE, warning=FALSE}
+Data.PA.KA.table.tool <- Data.PA.KA %>%
+  mutate(
+    Typology.simplified = dplyr::recode(
+      Typology.simplified,
+      `Bec` = "Retouched flake",
+      `Blade Aurignacian` = "Retouched blade",
+      `Blade pointed` = "Retouched blade",
+      `Blade retouched` = "Retouched blade",
+      `Blade with convergent retouch` = "Retouched blade",
+      `Blade with lateral retouch` = "Retouched blade",
+      `Blade with lateral retouch+Bec` = "Retouched blade",
+      `Blade with lateral retouch+Truncation` = "Composite tool",
+      `Bladelet retouched` = "Retouched bladelet",
+      `Bladelet with convergent retouch` = "Retouched bladelet",
+      `Bladelet with lateral retouch` = "Retouched bladelet",
+      `Burin` = "Burin, simple",
+      `Burin carinated` = "Burin, carinated",
+      `Burin carinated + Blade with lateral retouch` = "Composite tool",
+      `Burin carinated + Flake retouched` = "Composite tool",
+      `Burin carinated;Endscraper` = "Composite tool",
+      `Burin carinated+Burin multiple` = "Burin, carinated",
+      `Burin carinated+Endscraper` = "Composite tool",
+      `Burin carinated+Endscraper carinated` = "Composite tool",
+      `Burin carinated+Endscraper flat-nosed` = "Composite tool",
+      `Burin carinated+Endscraper thick-nosed` = "Composite tool",
+      `Burin carinated+Flake retouched` = "Composite tool",
+      `Burin dihedral` = "Burin, dihedral",
+      `Burin dihedral+Endscraper simple` = "Composite tool",
+      `Burin multiple` = "Burin, multiple",
+      `Burin multiple;Endscraper` = "Composite tool",
+      `Burin multiple;Scraper` = "Composite tool",
+      `Burin multiple+Blade with convergent retouch` = "Composite tool",
+      `Burin multiple+Endscraper` = "Composite tool",
+      `Burin multiple+Endscraper simple` = "Composite tool",
+      `Burin multiple+Flake retouched` = "Composite tool",
+      `Burin simple` = "Burin, simple",
+      `Burin simple+Blade with convergent retouch` = "Composite tool",
+      `Burin simple+Blade with lateral retouch` = "Composite tool",
+      `Burin simple+Flake retouched` = "Composite tool",
+      `Burin simple+Truncation` = "Composite tool",
+      `Burin;Scraper` = "Composite tool",
+      `Composite tool` = "Composite tool",
+      `Compsite tool` = "Composite tool",
+      `Endscraper` = "Endscraper, simple",
+      `Endscraper carinated` = "Endscraper, carinated",
+      `Endscraper carinated;Blade with lateral retouch` = "Composite tool",
+      `Endscraper carinated+Burin multiple` = "Composite tool",
+      `Endscraper carinated+Burin simple` = "Composite tool",
+      `Endscraper carinated+Flake retouched` = "Composite tool",
+      `Endscraper circular` = "Endscraper, simple",
+      `Endscraper double` = "Endscraper, simple",
+      `Endscraper double;Flake retouched` = "Composite tool",
+      `Endscraper flat-nosed` = "Endscraper, flat-nosed",
+      `Endscraper simple` = "Endscraper, simple",
+      `Endscraper simple;Endscraper thick` = "Endscraper, simple",
+      `Endscraper simple+Blade with lateral retouch` = "Composite tool",
+      `Endscraper simple+Burin simple` = "Composite tool",
+      `Endscraper simple+Burin simple+Blade with lateral retouch` = "Composite tool",
+      `Endscraper simple+Flake retouched` = "Composite tool",
+      `Endscraper thick-nosed` = "Endscraper, thick-nosed",
+      `Endscraper+Flake retouched` = "Composite tool",
+      `Flake retouched` = "Retouched flake",
+      `Flake retouched+Bec` = "Composite tool",
+      `Flake retouched+Truncation` = "Composite tool",
+      `Rabot` = "Rabot",
+      `Retouched blade` = "Retouched blade",
+      `Retouched bladelet` = "Retouched bladelet",
+      `Scaled piece` = "Scaled piece",
+      `Splintered piece` = "Scaled piece",
+      `Truncation` = "Truncation",
+      `Undet. retouched piece` = "Undet. ret. tool",
+      `Undetermined retouched piece` = "Undet. ret. tool"
+    )
+  )
+
+Data.PA.KA.table.tool %>%
+  filter(Class %in% c("Tool", "Core-Tool"), !Preservation %in% c("Mesial", "Distal")) %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1", "RB_A2-A1", "CTC_rsa'")) %>%
+  tabyl(Typology.simplified, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S30
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  tabyl(Cortex, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S31
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  tabyl(Elongation, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S32
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  tabyl(Robustness, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S33
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  tabyl(Curvature, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S34
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  tabyl(Torsion, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S35
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  tabyl(Blank.shape, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S36
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  tabyl(Distal.end, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S37
+
+```{r, echo=FALSE, warning=FALSE}
+MCA.data.tool %>%
+  mutate(Layer = fct_relevel(Layer, "KA_XIXB", "KA_XIXA", 
+                             "KA_XVIII", "KA_XVII", "KA_XVI", 
+                             "KA_XIII-XII", "KA_XIB", 
+                             "RF_A2-A1.high", "RF_A2-A1.low")) %>%
+  tabyl(Retouch.position, Layer) %>%
+  # adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+<br>
+
+### Table S38
+```{r, echo=FALSE, warning=FALSE}
+chronology.table <- readxl::read_xlsx("../data/Chronology-Table.xlsx", sheet = "joint_plot")
+
+chronology.table %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  autofit() 
+```

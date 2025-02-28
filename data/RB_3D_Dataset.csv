@@ -1,0 +1,111 @@
+"ID","Scanner","Layer","Raw_material","Class","Blank","Technology","Cortex","Preservation","Volume","Surface","Length","Width","Thickness","Core_classification"
+"RB_344","Artec.Spider","A1","Chert","Core","Other","Other","0%","Other",2605.665771,1167.434102,25.3999996185303,17.1000003814697,12.1000003814697,"Bipolar"
+"RB_345","Artec.Spider","A1","Chert","Tool","Blade","Maintenance","1-33%","Complete",16853.43164,6075.449806,89.8000030517578,34.9000015258789,14.1999998092651,NA
+"RB_346","Artec.Spider","A1","Chert","Tool","Flake","Optimal","0%","Distal",4873.913574,2125.669991,NA,42.0999984741211,11.1000003814697,NA
+"RB_347","Artec.Spider","A1","Chert","Tool","Flake","Initialization","66-99%","Complete",4610.561523,1792.924788,33.2000007629395,26.1000003814697,11.8999996185303,NA
+"RB_349","Artec.Spider","A1","Chert","Tool","Flake","Maintenance","0%","Complete",2032.089844,1188.645417,34.5999984741211,18.2000007629395,7.59999990463257,NA
+"RB_350","Artec.Spider","A1","Chert","Tool","Flake","Semi-cortical","1-33%","Complete",4091.886475,1609.32078,23.6000003814697,32.5999984741211,12.6999998092651,NA
+"RB_351","Artec.Spider","A1","Chert","Tool","Blade","Maintenance","0%","Complete",3027.382813,1789.920347,50,19.7999992370605,8,NA
+"RB_352","Artec.Spider","A1","Chert","Blank","Flake","Maintenance","1-33%","Complete",6229.114746,2666.756021,42.4000015258789,31.7000007629395,15,NA
+"RB_361","Artec.Spider","A1","Chert","Tool","Flake","Optimal","0%","Complete",840.753479,587.0009387,17.2999992370605,15.3999996185303,6.90000009536743,NA
+"RB_409","Artec.Spider","A1","Chert","Core-Tool","Flake","Semi-cortical","33-66%","Other",1753.108521,942.4136989,16.7999992370605,9.5,26.6000003814697,"Carinated"
+"RB_437","Artec.Spider","A2","Chert","Tool","Flake","Other","0%","Undetermined",1123.749634,772.5960807,23.5,7.5,15.8000001907349,NA
+"RB_438","Artec.Spider","A2","Chert","Tool","Flake","Semi-cortical","33-66%","Complete",1645.816284,1132.695777,32.5,18.3999996185303,7.90000009536743,NA
+"RB_440","Artec.Spider","A2","Chert","Tool","Flake","Semi-cortical","1-33%","Distal",9014.158203,3289.646056,50.5,34.4000015258789,15.1000003814697,NA
+"RB_443","Artec.Spider","A2","Chert","Tool","Flake","Optimal","0%","Distal",1462.643311,916.8534012,NA,22.7000007629395,8.60000038146973,NA
+"RB_444","Artec.Spider","A2","Chert","Tool","Flake","Initialization","0%","Distal",2942.933594,1331.849385,21.7000007629395,27,13.8000001907349,NA
+"RB_449","Artec.Spider","A2","Chert","Tool","Flake","Optimal","0%","Complete",7398.417969,2864.320484,45.5,31.3999996185303,13.8000001907349,NA
+"RB_453","Artec.Spider","A2","Chert","Tool","Blade","Optimal","0%","Proximal",696.8223267,574.7589948,NA,13.8000001907349,6.09999990463257,NA
+"RB_484","Artec.Spider","A2","Chert","Tool","Flake","Optimal","0%","Complete",2041.700439,1276.624502,34.7000007629395,19.5,8,NA
+"RB_485","Artec.Spider","A2","Chert","Tool","Bladelet","Maintenance","0%","Complete",636.4799194,625.2710434,33.5999984741211,9.19999980926514,4.69999980926514,NA
+"RB_486","Artec.Spider","A2","Chert","Blank","Bladelet","Initialization","1-33%","Complete",1791.476685,1366.644923,51.2999992370605,11.3999996185303,9.30000019073486,NA
+"RB_558","Artec.Spider","A1","Chert","Core-Tool","Other","Semi-cortical","33-66%","Other",30753.66992,6468.583046,28.7999992370605,36.2999992370605,63.2000007629395,"Carinated"
+"RB_559","Artec.Spider","A1","Chert","Core","Other","Other","0%","Other",19198.46094,4410.867148,48.7999992370605,38.2000007629395,27.1000003814697,"Multidirectional"
+"RB_560","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","1-33%","Other",31921.19922,6144.988409,36.7999992370605,31.6000003814697,45.7999992370605,"Semi-circumferential"
+"RB_561","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","1-33%","Other",22038.07227,4587.596141,41.9000015258789,37.4000015258789,35.2000007629395,"Semi-circumferential"
+"RB_562","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","1-33%","Other",10776.55859,2935.602394,30.3999996185303,22.2999992370605,31.3999996185303,"Multi-platform"
+"RB_563","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","1-33%","Other",12776.66895,3272.363318,29.6000003814697,30,38.4000015258789,"Semi-circumferential"
+"RB_564","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","33-66%","Other",7987.208984,2604.408616,30.5,37.2000007629395,24.6000003814697,"Initial laminar"
+"RB_565","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","1-33%","Other",7119.359863,2264.130136,31.7999992370605,28.1000003814697,16.7000007629395,"Multidirectional"
+"RB_566","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","33-66%","Other",6535.176758,2164.267155,31.7000007629395,36.7000007629395,13.6000003814697,"Wide-faced flat"
+"RB_567","Artec.Spider","A1","Chert","Core","Other","Other","0%","Other",3759.762451,1449.142317,19.7999992370605,25.1000003814697,20.2999992370605,"Semi-circumferential"
+"RB_568","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","33-66%","Other",5683.362305,1904.672487,32.0999984741211,21.2999992370605,19.5,"Narrow-sided"
+"RB_569","Artec.Spider","A1","Undetermined","Core","Other","Other","0%","Other",4359.668945,1739.708255,28.2999992370605,23.8999996185303,14.3999996185303,"Wide-faced flat"
+"RB_570","Artec.Spider","A1","Chert","Core","Other","Other","0%","Other",5063.742676,1723.347995,26.8999996185303,24.2000007629395,20.2999992370605,"Multi-platform"
+"RB_571","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","1-33%","Other",6642.842773,2412.795718,41.2999992370605,29.7999992370605,16,"Multi-platform"
+"RB_572","Artec.Spider","A1","Jasper","Core","Other","Other","0%","Other",621.2302246,453.1495582,19.5,9.69999980926514,8,"Bipolar"
+"RB_573","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","33-66%","Other",2431.598633,1197.927949,25.7999992370605,24,8.30000019073486,"Wide-faced flat"
+"RB_575","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",141999.2813,18350.94926,90,75.0999984741211,50.4000015258789,"Multidirectional"
+"RB_576","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","33-66%","Other",58862.01563,9639.198891,49.4000015258789,51.7999992370605,49.7999992370605,"Tested"
+"RB_577","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",28674.16797,6110.597871,42,49.7000007629395,39.2000007629395,"Multidirectional"
+"RB_578","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","33-66%","Other",14202.96777,3599.123696,33.2000007629395,29.2999992370605,30.6000003814697,"Initial laminar"
+"RB_579","Artec.Spider","A2","Chert","Core-Tool","Flake","Initialization","33-66%","Complete",25863.13477,5652.51691,32.7000007629395,44.2000007629395,59.9000015258789,"Carinated"
+"RB_580","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",17549.87695,4207.537303,51.9000015258789,37.2000007629395,25.7000007629395,"Multidirectional"
+"RB_581","Artec.Spider","A2","Chert","Core","Other","Initialization","66-99%","Other",14257.42578,3654.970194,43.0999984741211,34,26,"Initial laminar"
+"RB_582","Artec.Spider","A2","Chert","Core-Tool","Other","Other","0%","Other",8683.68457,2551.233426,41.5999984741211,25,20.1000003814697,"Carinated"
+"RB_583","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","33-66%","Other",11495.57617,3031.356489,37.0999984741211,36.9000015258789,19.7999992370605,"Multidirectional"
+"RB_584","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",7682.316406,2570.902603,42.9000015258789,34.9000015258789,19.6000003814697,"Multidirectional"
+"RB_585","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",4665.671875,1791.572802,33,22.7999992370605,19.7999992370605,"Semi-circumferential"
+"RB_586","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",1982.296997,995.4097577,20,19.8999996185303,14.3000001907349,"Shatter laminar"
+"RB_587","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","1-33%","Other",14571.57324,3549.737054,26.5,32.4000015258789,30.7999992370605,"Platform flake"
+"RB_588","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","1-33%","Other",6023.888672,2040.930464,30.7000007629395,13.5,26.7999992370605,"Narrow-sided"
+"RB_589","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","1-33%","Other",3386.852295,1406.449337,26.6000003814697,17.7999992370605,17.3999996185303,"Shatter laminar"
+"RB_590","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","1-33%","Other",2034.804077,1003.957981,22.2000007629395,17.2999992370605,15.3999996185303,"Multidirectional"
+"RB_591","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",5431.98584,1807.130769,19.7999992370605,24.7000007629395,25.2999992370605,"Semi-circumferential"
+"RB_592","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",4968.677246,1685.260376,20.2000007629395,19,25.5,"Multi-platform"
+"RB_593","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","33-66%","Other",2793.793701,1348.859705,36.4000015258789,12.1999998092651,10,"Semi-circumferential"
+"RB_594","Artec.Spider","A2","Chert","Core","Flake","Semi-cortical","33-66%","Other",15621.30371,4833.368085,52.5999984741211,33,18,"Multidirectional"
+"RB_595","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","1-33%","Other",8445.05957,2570.475957,31.2000007629395,27.3999996185303,18.2999992370605,"Shatter"
+"RB_596","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",3313.286865,1372.930439,20.7999992370605,19.2000007629395,15,"Multidirectional"
+"RB_597","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",3941.932861,1685.02946,30.7999992370605,21.1000003814697,13,"Multidirectional"
+"RB_598","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","33-66%","Other",3056.79541,1440.802123,35.9000015258789,16.6000003814697,11.5,"Multidirectional"
+"RB_599","Artec.Spider","A2","Chert","Core","Flake","Semi-cortical","1-33%","Other",6804.045898,2486.629027,31,33.5999984741211,15.1999998092651,"Shatter"
+"RB_600","Artec.Spider","A0","Chert","Pebble","Other","Initialization","100%","Other",5405.320801,1780.929335,34.2999992370605,19.8999996185303,17.3999996185303,NA
+"RB_617","Artec.Spider","A0","Chert","Tool","Blade","Optimal","0%","Proximal",3764.456543,2196.869636,63.9000015258789,27.6000003814697,8.10000038146973,NA
+"RB_618","Artec.Spider","A0","Chert","Tool","Blade","Initialization","100%","Distal",2788.566895,2055.994659,NA,29.2999992370605,5.09999990463257,NA
+"RB_619","Artec.Spider","A0","Chert","Blank","Flake","Maintenance","0%","Proximal",3947.761719,1727.452256,29,32.5,10.6000003814697,NA
+"RB_620","Artec.Spider","A0","Chert","Core-Tool","Flake","Optimal","0%","Complete",2346.773438,1096.469377,13.6000003814697,20.5,22,"Carinated"
+"RB_621","Artec.Spider","A0","Chert","Core-Tool","Flake","Undetermined","0%","Complete",3289.254639,1501.963767,36.7000007629395,18.1000003814697,13.1000003814697,"Carinated"
+"RB_1017","Artec.Spider","A1","Chert","Tool","Flake","Semi-cortical","33-66%","Complete",1947.456543,1300.744373,32.7999992370605,23.2999992370605,6.59999990463257,NA
+"RB_1018","Artec.Spider","A1","Chert","Core-Tool","Flake","Semi-cortical","1-33%","Complete",3113.247559,1433.987989,24.8999996185303,29.7999992370605,13.3000001907349,"Carinated"
+"RB_1019","Artec.Spider","A1","Chert","Tool","Flake","Semi-cortical","1-33%","Complete",2461.895752,1376.268662,32.0999984741211,23.2000007629395,8.60000038146973,NA
+"RB_1020","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","1-33%","Other",5610.946777,2579.543817,29.6000003814697,38.5,13,"Platform flake"
+"RB_1021","Artec.Spider","A1","Chert","Core","Other","Other","0%","Other",6394.330078,2210.593081,28.5,29.3999996185303,21.8999996185303,"Multi-platform"
+"RB_1022","Artec.Spider","A1","Chert","Core","Other","Other","0%","Other",6891.458984,2326.080058,19.8999996185303,25,26.6000003814697,"Shatter laminar"
+"RB_1023","Artec.Spider","A1","Chert","Core-Tool","Flake","Undetermined","0%","Undetermined",2360.431641,1075.956374,25.8999996185303,18.1000003814697,12.1999998092651,"Wide-faced flat"
+"RB_1025","Artec.Spider","A1","Chert","Blank","Flake","Maintenance","33-66%","Complete",2984.404053,1687.825127,37.9000015258789,23.1000003814697,8.39999961853027,NA
+"RB_1026","Artec.Spider","A1","Chert","Tool","Flake","Undetermined","0%","Undetermined",4329.47998,1729.962647,28.5,29.2999992370605,12.8000001907349,NA
+"RB_1030","Artec.Spider","A1","Chert","Core","Other","Other","0%","Other",1071.243652,647.0567896,15.3999996185303,13.1000003814697,8.5,"Shatter laminar"
+"RB_1033","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","33-66%","Other",11996.9834,3302.371425,27.8999996185303,22.7000007629395,43.2999992370605,"Tested"
+"RB_1034","Artec.Spider","A1","Chert","Tool","Flake","Semi-cortical","1-33%","Complete",2676.457031,1222.370463,27.2000007629395,20.7999992370605,9.80000019073486,NA
+"RB_1040","Artec.Spider","A1","Chert","Core","Other","Initialization","66-99%","Other",3379.51709,1686.488151,19.7000007629395,43.9000015258789,12.1999998092651,"Initial laminar"
+"RB_1045","Artec.Spider","A1","Chert","Tool","Flake","Semi-cortical","1-33%","Distal",1577.133057,869.1761042,15.6000003814697,25.2999992370605,10.1999998092651,NA
+"RB_1046","Artec.Spider","A1","Chert","Core-Tool","Blade","Optimal","0%","Complete",2159.197998,1264.625208,38.9000015258789,14.8999996185303,6.90000009536743,"Burin core"
+"RB_1047","Artec.Spider","A1","Jasper","Core","Other","Other","0%","Other",2779.836914,1337.461207,26.7999992370605,23.7999992370605,11.5,"Wide-faced flat"
+"RB_1054","Artec.Spider","A1","Chert","Blank","Flake","Maintenance","0%","Complete",1229.981567,852.0408151,15.3000001907349,26,10.3000001907349,NA
+"RB_1055","Artec.Spider","A1","Chert","Core","Other","Other","0%","Other",1026.000244,633.4166405,14.3999996185303,19.1000003814697,11.8999996185303,"Platform flake"
+"RB_1060","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","1-33%","Other",8875.226563,2777.204772,39.2999992370605,31,22.7999992370605,"Platform flake"
+"RB_1061","Artec.Spider","A1","Chert","Core","Other","Other","0%","Other",3000.860596,1282.066706,16.2999992370605,19.8999996185303,15.3000001907349,"Shatter"
+"RB_1070","Artec.Spider","A1","Chert","Tool","Flake","Optimal","0%","Complete",840.1862793,685.4427324,28.2999992370605,11.3000001907349,6.40000009536743,NA
+"RB_1078","Artec.Spider","A1","Chert","Tool","Flake","Initialization","66-99%","Distal",9863.552734,3389.302067,42.9000015258789,19.8999996185303,3.90000009536743,NA
+"RB_1079","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","1-33%","Other",4431.58,1700.23,24.3999996185303,18.1000003814697,28,"Narrow-sided"
+"RB_1084","Artec.Spider","A1","Chert","Tool","Blade","Optimal","0%","Distal",1243.983154,831.5137241,25.2000007629395,15.1999998092651,7.30000019073486,NA
+"RB_1086","Artec.Spider","A1","Chert","Core","Other","Semi-cortical","33-66%","Other",1084.336548,684.7452309,20.6000003814697,14.8000001907349,9.10000038146973,"Platform flake"
+"RB_1145","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",23191.93164,5021.844905,36.2999992370605,39.2000007629395,37.7999992370605,"Multidirectional"
+"RB_1146","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","1-33%","Other",6020.734375,2130.822443,23,27.1000003814697,24.1000003814697,"Platform flake"
+"RB_1147","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",17020.86328,4389.060032,21.3999996185303,38.5999984741211,47.7000007629395,"Platform flake"
+"RB_1148","Artec.Spider","A2","Chert","Core","Flake","Semi-cortical","1-33%","Other",8385.614258,2719.984056,42.2000007629395,16.2000007629395,26.7999992370605,"Narrow-sided"
+"RB_1149","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",13111.2373,3902.46089,57.0999984741211,32.7000007629395,20,"Multidirectional"
+"RB_1150","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",8839.828125,2785.049959,36.4000015258789,26.7000007629395,23,"Multidirectional"
+"RB_1151","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","33-66%","Other",52072.61328,9842.397966,60,66.1999969482422,27.5,"Tested"
+"RB_1152","Artec.Spider","A2","Chert","Core","Other","Semi-cortical","1-33%","Other",6907.495605,2457.686571,38,24,19,"Tested"
+"RB_1156","Artec.Spider","A2","Chert","Core","Flake","Semi-cortical","33-66%","Other",6022.821777,2286.837925,23.7000007629395,38.5,13.1999998092651,"Platform flake"
+"RB_1157","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",7343.620605,2315.260181,26,28,21.7000007629395,"Multidirectional"
+"RB_1160","Artec.Spider","A2","Chert","Core","Flake","Initialization","100%","Complete",7928.59375,2856.99274,41.7000007629395,39.2000007629395,14.1999998092651,"Platform flake"
+"RB_1162","Artec.Spider","A2","Chert","Core","Other","Other","0%","Other",4909.080566,2119.379724,27,28.3999996185303,13.3000001907349,"Shatter"
+"RB_1164","Artec.Spider","A2","Jasper","Core","Undetermined","Undetermined","0%","Undetermined",1131.302002,656.205167,17.6000003814697,9,18.2000007629395,"Bipolar"
+"RB_1168","Artec.Spider","A2","Chert","Tool","Flake","Semi-cortical","33-66%","Proximal",3547.093506,1673.137811,29.1000003814697,28.7999992370605,13.1000003814697,NA
+"RB_1183","Artec.Spider","A2","Chert","Tool","Other","Other","0%","Other",805.6209106,578.4245842,20.5,6.40000009536743,12.1000003814697,NA
+"RB_1247","Artec.Spider","A0","Chert","Core","Other","Semi-cortical","33-66%","Other",4749.35498,1787.334134,19,29.2000007629395,24.7999992370605,"Initial flake"
+"RB_1249","Artec.Spider","A0","Chert","Core","Other","Other","0%","Other",1277.501831,745.9641015,13.6999998092651,17.7999992370605,17.8999996185303,"Shatter laminar"
+"RB_1258","Artec.Spider","A0","Jasper","Core","Other","Other","0%","Other",684.1730957,513.4398237,18.5,11,12.3999996185303,"Bipolar"

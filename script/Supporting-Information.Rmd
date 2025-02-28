@@ -1,0 +1,258 @@
+---
+title: "Exploration"
+author: "Armando Falcucci"
+date: "2025-02-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(flextable)
+library(janitor)
+```
+
+```{r}
+
+Cala <- read.csv("../data/Ca_3D_Dataset.csv") %>%
+  mutate(Site = "Cala") %>%
+  rename(Layer = Spit)
+
+Castelcivita <- read.csv("../data/CTC_3D_Dataset.csv") %>%
+  mutate(Site = "Castelcivita")
+
+Bombrini <- read.csv("../data/RB_3D_Dataset.csv") %>%
+  mutate(Site = "Bombrini")
+
+Fumane <- read.csv("../data/RF_3D_Dataset.csv") %>%
+  rename(Layer = Unit)
+
+dataset <- rbind(Bombrini, Cala, Castelcivita, Fumane) %>%
+  mutate(Scanner = recode(Scanner, "Artec.spider" = "Artec.Spider"))
+
+```
+
+## Table 2
+
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  mutate(Site = fct_relevel(Site, "Cala", "Castelcivita", "Fumane", "Bombrini")) %>%
+tabyl(Site, Scanner) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+## Table 4
+
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  mutate(Site = fct_relevel(Site, "Cala", "Castelcivita", "Fumane", "Bombrini")) %>%
+  mutate(Preservation = recode(Preservation, "Other" = "Other/Undet", "Undetermined" = "Other/Undet")) %>%
+  mutate(Preservation = fct_relevel(Preservation, "Complete", "Proximal", "Mesial", "Distal", "Other/Undet")) %>%
+  filter(Class == "Tool") %>%
+tabyl(Site, Preservation) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+
+## Table 3
+
+```{r, echo=FALSE, warning=FALSE}
+dataset %>%
+  mutate(Site = fct_relevel(Site, "Cala", "Castelcivita", "Fumane", "Bombrini")) %>%
+  mutate(Preservation = recode(Preservation, "Other" = "Other/Undet", "Undetermined" = "Other/Undet")) %>%
+  mutate(Preservation = fct_relevel(Preservation, "Complete", "Proximal", "Mesial", "Distal", "Other/Undet")) %>%
+  filter(Class == "Blank") %>%
+tabyl(Site, Preservation) %>%
+  adorn_totals("col") %>%
+  adorn_totals("row") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  adorn_ns(position = "front") %>%
+  flextable() %>%
+  theme_vanilla() %>%
+  set_table_properties(layout = "autofit") %>%
+  autofit()
+```
+
+
+
+## Figure 3
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(gridExtra)
+
+# Plot 1: Boxplot for Volume
+plot_volume <- dataset %>%
+  mutate(Scanner = recode(Scanner, "Artec.Spider" = "Artec Spider", "Artec.Micro" = "Artec Micro")) %>%
+  ggplot(aes(x = Scanner, y = log(Volume), fill = Scanner)) +
+  geom_boxplot() +  # Create the boxplot
+  geom_jitter(width = 0.2, size = 2, color = "black", alpha = 0.2) +  # Add jittered points
+  theme_minimal() +  # Use a minimal theme
+  labs(
+    title = "",
+    x = "Scanner",  # Label for the x-axis
+    y = "LogVolume"         # Label for the y-axis
+  ) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),  # Title styling
+    axis.title = element_text(size = 14),  # Axis titles styling
+    axis.text = element_text(size = 12),  # Axis text styling
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for readability
+    legend.position = "none"  # Remove the legend
+  )
+
+
+plot_volume
+# save plot_volume as tiff
+ggsave("../output/plot_volume.tiff", plot_volume, width = 6, height = 4, dpi = 300)
+
+```
+
+
+## Figure 4
+```{r}
+# Assuming you have combined data and the necessary libraries loaded
+
+Figure_4 <- dataset %>%
+  mutate(Class = fct_relevel(Class, "Blank", "Core", "Core-Tool", "Tool", "Hammerstone")) %>%
+  mutate(Class = recode(Class, "Pebble" = "Hammerstone")) %>%
+  ggstatsplot::ggbarstats(
+    x = Class,  
+    y = Site,
+    palette = "Set3",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Class"))
+
+# save in tiff
+ggsave("../output/Figure_4.tiff", width = 8, height = 6, dpi = 300)
+
+```
+
+
+## Figure 6
+
+```{r}
+dataset %>%
+  filter(!Blank %in% c("Other")) %>%
+  filter(!Class %in% c("Core-Tool", "Core")) %>%
+  ggstatsplot::ggbarstats(
+    x = Blank,  
+    y = Site,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  # labs(subtitle = "a") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Blank type"))
+
+```
+
+
+```{r}
+Fig6a <- dataset %>%
+  filter(!Blank %in% c("Other")) %>%
+  filter(!Class %in% c("Core-Tool", "Core", "Tool")) %>%
+  ggstatsplot::ggbarstats(
+    x = Blank,  
+    y = Site,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  labs(title = "Blanks") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Blank type"))
+
+
+Fig6b <- dataset %>%
+  filter(!Blank %in% c("Other", "Undetermined")) %>%
+  filter(!Class %in% c("Core-Tool", "Core", "Blank")) %>%
+  ggstatsplot::ggbarstats(
+    x = Blank,  
+    y = Site,
+    palette = "Set2",
+    results.subtitle = F) +
+  theme_minimal() +
+  labs(title = "Tools") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.subtitle = element_text(hjust = 0, vjust = -0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate y-axis labels by 45 degrees
+  ) +
+  guides(fill = guide_legend(title = "Blank type"))
+
+Figure_6 <- (Fig6a | Fig6b) + 
+  patchwork::plot_layout(guides = "collect") & 
+  theme(legend.position = "bottom")
+
+# save as tigg
+ggsave("../output/Figure_6.tiff", Figure_6, width = 8, height = 5, dpi = 300)
+
+```
+
+
+
+
+```{r}
+
+```
+
+
