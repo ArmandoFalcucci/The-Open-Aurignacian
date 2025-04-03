@@ -1,10 +1,12 @@
 ## Research Compendium for 'The Open Aurignacian Project: 3D scanning and the digital preservation of the Italian Paleolithic record'
 
+![](output/OAP.png)
+
 ### Compendium DOI:
 
-_add after first round of review_
+[![DOI](https://zenodo.org/badge/.svg)](https://zenodo.org/doi/)
 
-The content available at the provided Zenodo DOI reproduces the results as documented in the publication. The files hosted at <https://github.com/ArmandoFalcucci/The-Open-Aurignacian> represent the developmental versions and might have undergone modifications since the paper's publication.
+The content available at the above provided Zenodo DOI reproduces the results as documented in the publication. The files hosted at <https://github.com/ArmandoFalcucci/The-Open-Aurignacian> represent the developmental versions and might have undergone modifications since the paper's publication.
 
 ### Maintainer of this Repository:
 
