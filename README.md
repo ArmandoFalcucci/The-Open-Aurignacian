@@ -34,7 +34,7 @@ To replicate the results from the paper, follow these steps:
 
 1. Download the entire repository.
 2. Open the `The-Open-Aurignacian.Rproj` R project file.
-3. Navigate to the `script` folder, where you will find the R scripts arranged in a numbered order for reproducibility.
+3. Navigate to the `script` folder, where you will find the R script for reproducing figures and tables.
 
 For consistent results, the `renv` package (v. 1.0.3) was used, following the procedures outlined in its vignette. All analyses were performed using R 4.3.1 on Microsoft Windows 10.0.19045 (64-bit). Necessary packages are provided within the `renv` folder.
 
