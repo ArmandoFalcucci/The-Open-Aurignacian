@@ -2,9 +2,15 @@
 
 ![](output/OAP.png)
 
+### Links to the Zenodo datasets:
+- [Volume 1: Grotta di Fumane](https://doi.org/10.5281/zenodo.6362149)
+- [Volume 2: Grotta di Castelcivita](https://doi.org/10.5281/zenodo.10631389)
+- [Volume 3: Grotta della Cala](https://doi.org/10.5281/zenodo.14165189)
+- [Volume 4: Riparo Bombrini](https://doi.org/10.5281/zenodo.14731694)
+
 ### Compendium DOI:
 
-[![DOI](https://zenodo.org/badge/.svg)](https://zenodo.org/doi/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15131493.svg)](https://zenodo.org/doi/10.5281/zenodo.15131493)
 
 The content available at the above provided Zenodo DOI reproduces the results as documented in the publication. The files hosted at <https://github.com/ArmandoFalcucci/The-Open-Aurignacian> represent the developmental versions and might have undergone modifications since the paper's publication.
 
@@ -18,7 +24,7 @@ The content available at the above provided Zenodo DOI reproduces the results as
 
 ### Abstract:
 
-Here, we introduce a unique open-access database of 3D models (n = 2,016) from four pivotal Early Upper Paleolithic sequences excavated south of the Alps and along Peninsular Italy, including Grotta della Cala, Grotta di Castelcivita, Grotta di Fumane, and Riparo Bombrini. These 3D meshes were obtained as part of a research project aimed at investigating the cultural dynamics and human behavior during the Aurignacian in Mediterranean Europe. Available through four self-standing Zenodo repositories, these models enable in-depth analysis of core reduction procedures, reduction intensity, and shape variability of stone tools, with a particular focus on bladelet technologies, which are hallmarks of the Aurignacian technocomplex. Unlike other repositories, this database has been actively used to address significant archaeological questions, providing a comprehensive demonstration of the utilization of 3D models in lithic analysis. The Open Aurignacian Project leverages various scanning devices, including the Artec Space Spider, Artec Micro, and micro-computed tomography, with a focus on enhancing the reproducibility and accessibility of archaeological data. This paper presents the scanning methodology, dataset organization, and technical validation of the project, while also discussing the scientific potential of these data to foster cross-continental research cooperation. This open-sharing initiative is designed to stimulate inter-regional studies of human behavioral variability, offering new opportunities to answer longstanding questions in Paleolithic studies through the FAIR (Findable, Accessible, Interoperable, Reusable) data principles.
+Here, we introduce an open-access database of 3D models of stone tools (n = 2,016) from four Early Upper Paleolithic sequences excavated south of the Alps and along Peninsular Italy, including Grotta della Cala, Grotta di Castelcivita, Grotta di Fumane, and Riparo Bombrini. Available through four self-standing Zenodo repositories, these models enable in-depth analysis of core reduction procedures, reduction intensity, and shape variability. Unlike other repositories, this database been actively used to address archaeological questions, providing a comprehensive demonstration of the utilization of 3D models in lithic analysis. The Open Aurignacian Project leverages various scanning devices, including the Artec Spider, Artec Micro, and micro-computed tomography, with a focus on enhancing the reproducibility and accessibility of archaeological data. This paper presents the scanning methodology, dataset organization, and technical validation of the project, while also discussing the scientific potential of these data to foster cross-continental research cooperation. This open-sharing initiative is designed to stimulate inter-regional studies of human behavioral variability, offering opportunities to answer questions in Paleolithic studies through the FAIR principles.
 
 ### Keywords:
 
