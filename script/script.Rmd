@@ -16,26 +16,22 @@ library(flextable)
 library(janitor)
 library(ggplot2)
 library(gridExtra)
+library(cowplot)
 ```
 
 ```{r, echo=FALSE, warning=FALSE}
 # Datasets loading
-Cala <- read.csv("../data/Ca_3D_Dataset.csv") %>%
-  mutate(Site = "Cala") %>%
-  rename(Layer = Spit)
+Cala <- read.csv("../data/Cala_3D_metadata.csv")
 
-Castelcivita <- read.csv("../data/CTC_3D_Dataset.csv") %>%
-  mutate(Site = "Castelcivita")
+Castelcivita <- read.csv("../data/Castelcivita_3D_metadata.csv")
 
-Bombrini <- read.csv("../data/RB_3D_Dataset.csv") %>%
-  mutate(Site = "Bombrini")
+Bombrini <- read.csv("../data/Bombrini_3D_metadata.csv")
 
-Fumane <- read.csv("../data/RF_3D_Dataset.csv") %>%
-  rename(Layer = Unit)
+Fumane <- read.csv("../data/Fumane_3D_metadata.csv")
 
-dataset <- rbind(Bombrini, Cala, Castelcivita, Fumane) %>%
-  mutate(Scanner = recode(Scanner, "Artec.spider" = "Artec.Spider"))
+dataset <- rbind(Bombrini, Cala, Castelcivita, Fumane)
 
+# write.csv(dataset, "../data/3D_Datasets.csv", row.names = FALSE)
 ```
 
 ## Tables
@@ -98,15 +94,16 @@ tabyl(Site, Preservation) %>%
   autofit()
 ```
 
+
 ## Figures
 
-### Figure 3
+### Figure 3a
 ```{r}
-plot_volume <- dataset %>%
-  mutate(Scanner = recode(Scanner, "Artec.Spider" = "Artec Spider", "Artec.Micro" = "Artec Micro")) %>%
+Figure_3a <- dataset %>%
+  mutate(Scanner = recode(Scanner, "Artec.Spider-1" = "Artec Spider", "Artec.Micro-1" = "Artec Micro", "Micro-CT (Phoenix v-tome-x s, General Electronics)" = "Micro-CT")) %>%
   ggplot(aes(x = Scanner, y = log(Volume), fill = Scanner)) +
-  geom_boxplot() +
-  geom_jitter(width = 0.2, size = 2, color = "black", alpha = 0.2) +
+  geom_boxplot(alpha = 0.8) +
+  geom_jitter(width = 0.25, size = 2, color = "black", alpha = 0.15) +
   theme_minimal() +
   labs(
     title = "",
@@ -121,10 +118,45 @@ plot_volume <- dataset %>%
     legend.position = "none"
   )
 
-plot_volume
+Figure_3a
 # ggsave("../output/plot_volume.tiff", plot_volume, width = 6, height = 4, dpi = 300)
+```
 
-ggsave("../output/Figure_3.pdf", plot_volume, width = 6, height = 4, dpi = 300)
+
+### Figure 3b
+```{r}
+Figure_3b <- dataset %>%
+  mutate(Scanner = recode(Scanner, "Artec.Spider-1" = "Artec Spider", "Artec.Micro-1" = "Artec Micro", "Micro-CT (Phoenix v-tome-x s, General Electronics)" = "Micro-CT")) %>%
+  ggplot(aes(x = Avg_edge_length.mm..Resolution, fill = Scanner)) +
+  geom_density(alpha = 0.8) +
+  theme_minimal() +
+  labs(
+    title = "",
+    x = "Resolution (average edge length)",
+    y = "Density",
+    fill = "Scanner"
+  ) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.position = "bottom"
+  )
+
+Figure_3b
+```
+
+
+### Figure 3
+```{r}
+Figure_3 <- plot_grid(Figure_3a, Figure_3b, ncol = 2, labels = c("a", "b")) +
+  theme(plot.title = element_text(size = 16, face = "bold"))
+
+Figure_3
+
+ggsave("../output/Figure_3.pdf", Figure_3, width = 8, height = 4, dpi = 300)
+
+ggsave("../output/Figure_3.tiff", Figure_3, width = 9, height = 4, dpi = 300)
 
 ```
 
@@ -154,9 +186,9 @@ Figure_4 <- dataset %>%
   guides(fill = guide_legend(title = "Class"))
 
 
-# ggsave("../output/Figure_4.tiff", width = 8, height = 6, dpi = 300)
+ggsave("../output/Figure_4.pdf", Figure_4, width = 8, height = 6, dpi = 300)
 
-ggsave("../output/Figure_4.pdf", width = 8, height = 6, dpi = 300)
+ggsave("../output/Figure_4.tiff", Figure_4, width = 8, height = 6, dpi = 300)
 
 ```
 
@@ -173,7 +205,7 @@ Fig6a <- dataset %>%
     palette = "Set2",
     results.subtitle = F) +
   theme_minimal() +
-  labs(title = "Blanks") +
+  labs(title = "a") +
   theme(
     plot.title = element_text(size = 16, face = "bold"),
     axis.title = element_text(size = 14),
@@ -197,7 +229,7 @@ Fig6b <- dataset %>%
     palette = "Set2",
     results.subtitle = F) +
   theme_minimal() +
-  labs(title = "Tools") +
+  labs(title = "b") +
   theme(
     plot.title = element_text(size = 16, face = "bold"),
     axis.title = element_text(size = 14),
@@ -215,17 +247,7 @@ Figure_6 <- (Fig6a | Fig6b) +
   patchwork::plot_layout(guides = "collect") & 
   theme(legend.position = "bottom")
 
-# ggsave("../output/Figure_6.tiff", Figure_6, width = 8, height = 5, dpi = 300)
-
 ggsave("../output/Figure_6.pdf", Figure_6, width = 8, height = 5, dpi = 300)
 
+ggsave("../output/Figure_6.tiff", Figure_6, width = 8, height = 5, dpi = 300)
 ```
-
-
-
-
-```{r}
-
-```
-
-

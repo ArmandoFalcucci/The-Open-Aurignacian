@@ -24,25 +24,25 @@ The content available at the above provided Zenodo DOI reproduces the results as
 
 ### Abstract:
 
-Here, we introduce an open-access database of 3D models of stone tools (n = 2,016) from four Early Upper Paleolithic sequences excavated south of the Alps and along Peninsular Italy, including Grotta della Cala, Grotta di Castelcivita, Grotta di Fumane, and Riparo Bombrini. Available through four self-standing Zenodo repositories, these models enable in-depth analysis of core reduction procedures, reduction intensity, and shape variability. Unlike other repositories, this database been actively used to address archaeological questions, providing a comprehensive demonstration of the utilization of 3D models in lithic analysis. The Open Aurignacian Project leverages various scanning devices, including the Artec Spider, Artec Micro, and micro-computed tomography, with a focus on enhancing the reproducibility and accessibility of archaeological data. This paper presents the scanning methodology, dataset organization, and technical validation of the project, while also discussing the scientific potential of these data to foster cross-continental research cooperation. This open-sharing initiative is designed to stimulate inter-regional studies of human behavioral variability, offering opportunities to answer questions in Paleolithic studies through the FAIR principles.
+Here, we introduce an open-access database of 3D models of stone tools (n = 2,016) from four Early Upper Paleolithic sequences excavated south of the Alps and along Peninsular Italy, including Grotta della Cala, Grotta di Castelcivita, Grotta di Fumane, and Riparo Bombrini. Available through four self-standing Zenodo repositories, these models enable in-depth analysis of core reduction procedures, reduction intensity, and shape variability. Unlike other repositories, this database has been actively used to address archaeological questions, providing a comprehensive demonstration of the use of 3D models in lithic analysis. The Open Aurignacian Project utilizes various scanning devices, including the Artec Spider, Artec Micro, and micro-computed tomography, with a focus on enhancing the reproducibility and accessibility of archaeological data. This paper presents the scanning methodology, dataset organization, and technical validation of the project, while also discussing the scientific potential of these data to foster cross-continental research collaboration. This open-sharing initiative is designed to stimulate inter-regional studies of human behavioral evolution, offering new opportunities to address questions in Paleolithic studies through the FAIR principles.
 
 ### Keywords:
 
-3D imaging; Cultural Heritage; Early Upper Paleolithic; *Homo sapiens*; Lithic Technology.
+3D imaging; Scanning; Cultural Heritage; Early Upper Paleolithic; Lithic Technology.
 
 ### Overview of Contents and How to Reproduce:
 
 This repository contains data, code, and output files associated with the paper. The files are organized into the following directories:
 
-- **`data`**: Includes the datasets afor each site.
-- **`script`**: Contains the R script for data visualization.
-- **`output`**: Houses the generated outputs, including figures and tables.
+- **`data`**: Contains the metadata files for each site.
+- **`script`**: Includes the R script for data visualization, as well as the Python scripts used to calculate the average edge length (in mm) and the number of polygons for all 3D meshes.
+- **`output`**: Contains the generated outputs for the paper, including figures and tables.
 
 To replicate the results from the paper, follow these steps:
 
 1. Download the entire repository.
 2. Open the `The-Open-Aurignacian.Rproj` R project file.
-3. Navigate to the `script` folder, where you will find the R script for reproducing figures and tables.
+3. Navigate to the `script` folder, where you will find the R and Python scripts for reproducing figures, tables, and measurements.
 
 For consistent results, the `renv` package (v. 1.0.3) was used, following the procedures outlined in its vignette. All analyses were performed using R 4.3.1 on Microsoft Windows 10.0.19045 (64-bit). Necessary packages are provided within the `renv` folder.
 
